@@ -22,7 +22,6 @@ logging.basicConfig(stream=stderr)
 import hmac
 from hashlib import sha1
 from json import loads, dumps
-from shlex import split as shsplit
 from subprocess import Popen, PIPE
 from os import access, X_OK
 from os.path import isfile, abspath, normpath, dirname, join
@@ -101,29 +100,31 @@ def index():
     ]
 
     # Run scripts
-    silent = config.get('return_scripts_info', False)
     ran = {}
     for s in scripts:
         if isfile(s) and access(s, X_OK):
 
-            cmd = "{} '{}'".format(s, dumps(payload))
-            logging.error(cmd)
-
             proc = Popen(
-                shsplit(cmd),
+                [s, dumps(payload)],
                 shell=True,
                 stdout=PIPE, stderr=PIPE
             )
             stdout, stderr = proc.communicate()
 
-            if not silent:
-                ran[basename(s)] = {
-                    'returncode': proc.returncode,
-                    'stdout': stdout,
-                    'stderr': stderr,
-                }
+            ran[basename(s)] = {
+                'returncode': proc.returncode,
+                'stdout': stdout,
+                'stderr': stderr,
+            }
 
-    return ran
+    output = ''
+
+    info = config.get('return_scripts_info', False)
+    if info:
+        output = dumps(ran, sort_keys=True, indent=4)
+        logging.debug(output)
+
+    return output
 
 
 if __name__ == '__main__':
