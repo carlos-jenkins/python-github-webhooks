@@ -105,16 +105,20 @@ def index():
     ran = {}
     for s in scripts:
         if isfile(s) and access(s, X_OK):
-            cmd = Popen(
-                shsplit("{} '{}'".format(s, dumps(payload))),
+
+            cmd = "{} '{}'".format(s, dumps(payload))
+            logging.error(cmd)
+
+            proc = Popen(
+                shsplit(cmd),
                 shell=True,
                 stdout=PIPE, stderr=PIPE
             )
-            stdout, stderr = cmd.communicate()
+            stdout, stderr = proc.communicate()
 
             if not silent:
                 ran[basename(s)] = {
-                    'returncode': cmd.returncode,
+                    'returncode': proc.returncode,
                     'stdout': stdout,
                     'stderr': stderr,
                 }
