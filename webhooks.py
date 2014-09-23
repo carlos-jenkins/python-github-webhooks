@@ -77,7 +77,7 @@ def index():
             abort(403)
 
     # Implement ping
-    event = request.headers.get('X-GitHub-Event', None)
+    event = request.headers.get('X-GitHub-Event', 'ping')
     if event == 'ping':
         return dumps({'msg': 'pong'})
 
