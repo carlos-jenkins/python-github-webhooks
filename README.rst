@@ -66,20 +66,19 @@ and has a shebang. A simple example in Python could be:
 
     #!/usr/bin/env python
     # Python Example for Python GitHub Webhooks
+    # File: push-myrepo-master
 
-    import os
     import sys
     import json
-    from tempfile import mkstemp
 
     payload = json.loads(sys.argv[1])
-    _, tmpfile = mkstemp()
 
     ### Do something with the payload
-    if payload['repository']['name'] == 'my-repo-name':
-        f = open(tmpfile, 'w')
+    name = payload['repository']['name']
+    outfile = '/tmp/hook-{}.log'.format(name)
+
+    with open(outfile, 'w') as f:
         f.write(json.dumps(payload))
-        f.close()
 
 
 Test

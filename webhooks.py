@@ -38,8 +38,11 @@ application = Flask(__name__)
 @application.route('/', methods=['GET', 'POST'])
 def index():
     """
+    Main WSGI application entry.
     """
-    hooks = join(normpath(abspath(dirname(__file__))), 'hooks')
+
+    path = normpath(abspath(dirname(__file__)))
+    hooks = join(path, 'hooks')
 
     whitelist = requests.get('https://api.github.com/meta').json()['hooks']
 
@@ -48,7 +51,7 @@ def index():
         abort(501)
 
     # Load config
-    with open('config.json', 'r') as cfg:
+    with open(join(path, 'config.json'), 'r') as cfg:
         config = loads(cfg.read())
 
     # Allow Github IPs only
