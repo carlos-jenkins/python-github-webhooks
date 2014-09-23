@@ -101,7 +101,7 @@ def index():
     ]
 
     # Run scripts
-    silent = config.get(return_scripts_info, False)
+    silent = config.get('return_scripts_info', False)
     ran = {}
     for s in scripts:
         if isfile(s) and access(s, X_OK):
