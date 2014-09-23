@@ -1,4 +1,5 @@
 {
     "github_ips_only": false,
     "enforce_secret": "",
+    "return_scripts_info": true
 }

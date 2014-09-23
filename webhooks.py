@@ -98,6 +98,7 @@ def index():
     ]
 
     # Run scripts
+    silent = config.get(return_scripts_info, False)
     ran = {}
     for s in scripts:
         if isfile(s) and access(s, X_OK):
@@ -107,11 +108,13 @@ def index():
                 stdout=PIPE, stderr=PIPE
             )
             stdout, stderr = cmd.communicate()
-            ran[basename(s)] = {
-                'returncode': returncode,
-                'stdout': stdout,
-                'stderr': stderr,
-            }
+
+            if not silent:
+                ran[basename(s)] = {
+                    'returncode': cmd.returncode,
+                    'stdout': stdout,
+                    'stderr': stderr,
+                }
 
     return ran
 
