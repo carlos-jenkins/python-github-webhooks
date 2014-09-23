@@ -15,6 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import logging
+from sys import stderr
+logging.basicConfig(stream=stderr)
+
 import hmac
 from hashlib import sha1
 from json import loads, dumps
