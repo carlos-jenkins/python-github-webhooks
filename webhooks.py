@@ -18,7 +18,7 @@
 import hmac
 from hashlib import sha1
 from json import loads, dumps
-from ip_address import ip_address, ip_network
+from ipaddress import ip_address, ip_network
 from shlex import split as shsplit
 from os import access, X_OK
 from os.path import isfile, abspath, normpath, dirname, join
