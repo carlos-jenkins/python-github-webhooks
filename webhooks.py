@@ -24,7 +24,7 @@ from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
 from os import access, X_OK
-from os.path import isfile, abspath, normpath, dirname, join
+from os.path import isfile, abspath, normpath, dirname, join, basename
 
 import requests
 from ipaddress import ip_address, ip_network
