@@ -18,11 +18,12 @@
 import hmac
 from hashlib import sha1
 from json import loads, dumps
-from ipaddress import ip_address, ip_network
 from shlex import split as shsplit
 from os import access, X_OK
 from os.path import isfile, abspath, normpath, dirname, join
 
+import requests
+from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
 
 
@@ -92,9 +93,17 @@ def index():
     ]
 
     # Run scripts
+    ran = {}
     for s in scripts:
         if isfile(s) and access(s, X_OK):
-            call(
+            ret = call(
                 shsplit("{} '{}'".format(s, dumps(payload))),
                 shell=True
             )
+            ran[basename(s)] = ret
+
+    return ran
+
+
+if __name__ == '__main__':
+    application.run(debug=True, host='0.0.0.0')
