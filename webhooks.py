@@ -29,7 +29,7 @@ from flask import Flask, request, abort
 application = Flask(__name__)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@application.route('/', methods=['GET', 'POST'])
 def index():
     """
     """
