@@ -19,6 +19,7 @@ import hmac
 from hashlib import sha1
 from json import loads, dumps
 from shlex import split as shsplit
+from subprocess import Popen, PIPE
 from os import access, X_OK
 from os.path import isfile, abspath, normpath, dirname, join
 
@@ -96,11 +97,17 @@ def index():
     ran = {}
     for s in scripts:
         if isfile(s) and access(s, X_OK):
-            ret = call(
+            cmd = Popen(
                 shsplit("{} '{}'".format(s, dumps(payload))),
-                shell=True
+                shell=True,
+                stdout=PIPE, stderr=PIPE
             )
-            ran[basename(s)] = ret
+            stdout, stderr = cmd.communicate()
+            ran[basename(s)] = {
+                'returncode': returncode,
+                'stdout': stdout,
+                'stderr': stderr,
+            }
 
     return ran
 
