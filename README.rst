@@ -9,7 +9,8 @@ Dependencies
 
 ::
 
-   sudo pip install Flask
+   sudo pip install -r requirements.txt
+
 
 Install
 =======
