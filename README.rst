@@ -38,12 +38,16 @@ You can configure what the application does by changing ``config.json``:
 :github_ips_only: Restrict application to be called only by GitHub IPs. IPs
  whitelist is obtained from
  `GitHub Meta <https://developer.github.com/v3/meta/>`_
- (`endpoint <https://api.github.com/meta>`_).
+ (`endpoint <https://api.github.com/meta>`_). Default: ``true``.
 :enforce_secret: Enforce body signature with HTTP header ``X-Hub-Signature``.
  See ``secret`` at
  `GitHub WebHooks Documentation <https://developer.github.com/v3/repos/hooks/>`_.
+ Default: ``''`` (do not enforce).
 :return_scripts_info: Return a JSON with the ``stdout``, ``stderr`` and exit
- code for each executed hook using the hook name as key.
+ code for each executed hook using the hook name as key. If this option is set
+ you will be able to see the result of your hooks from within your GitHub
+ hooks configuration page (see "Recent Deliveries").
+ Default: ``true``.
 
 
 Adding Hooks
