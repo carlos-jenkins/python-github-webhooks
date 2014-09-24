@@ -23,7 +23,8 @@ import hmac
 from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
-from os import access, X_OK
+from tempfile import mkstemp
+from os import access, X_OK, remove
 from os.path import isfile, abspath, normpath, dirname, join, basename
 
 import requests
@@ -99,31 +100,48 @@ def index():
         join(hooks, 'all')
     ]
 
+    # Check permissions
+    scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
+    if not scripts:
+        return ''
+
+    # Save payload to temporal file
+    _, tmpfile = mkstemp()
+    with open(tmpfile, 'w') as pf:
+        pf.write(dumps(payload))
+
     # Run scripts
     ran = {}
     for s in scripts:
-        if isfile(s) and access(s, X_OK):
 
-            proc = Popen(
-                [s, dumps(payload)],
-                shell=True,
-                stdout=PIPE, stderr=PIPE
-            )
-            stdout, stderr = proc.communicate()
+        proc = Popen(
+            [s, tmpfile, event],
+            shell=True,
+            stdout=PIPE, stderr=PIPE
+        )
+        stdout, stderr = proc.communicate()
 
-            ran[basename(s)] = {
-                'returncode': proc.returncode,
-                'stdout': stdout,
-                'stderr': stderr,
-            }
+        ran[basename(s)] = {
+            'returncode': proc.returncode,
+            'stdout': stdout,
+            'stderr': stderr,
+        }
 
-    output = ''
+        # Log errors if a hook failed
+        if proc.returncode != 0:
+            logging.error('{} : {} \n{}'.format(
+                s, proc.returncode, stderr
+            ))
+
+    # Remove temporal file
+    remove(tmpfile)
 
     info = config.get('return_scripts_info', False)
-    if info:
-        output = dumps(ran, sort_keys=True, indent=4)
-        logging.debug(output)
+    if not info:
+        return ''
 
+    output = dumps(ran, sort_keys=True, indent=4)
+    logging.info(output)
     return output
 
 

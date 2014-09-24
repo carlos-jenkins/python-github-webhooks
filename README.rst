@@ -58,9 +58,16 @@ following order:
     hooks/{event}
     hooks/all
 
-The application will pass to the hooks the JSON received as first argument.
-Hooks can be written in any scripting language as long as the file is executable
-and has a shebang. A simple example in Python could be:
+The application will pass to the hooks the path to a JSON file holding the
+payload for the request as first argument. The event type will be passed
+as second argument. For example:
+
+::
+
+    hooks/push-myrepo-master /tmp/sXFHji push
+
+Hooks can be written in any scripting language as long as the file is
+executable and has a shebang. A simple example in Python could be:
 
 ::
 
@@ -71,7 +78,8 @@ and has a shebang. A simple example in Python could be:
     import sys
     import json
 
-    payload = json.loads(sys.argv[1])
+    with open(sys.argv[1], 'r') as jsf:
+      payload = json.loads(jsf.read())
 
     ### Do something with the payload
     name = payload['repository']['name']
