@@ -116,7 +116,6 @@ def index():
 
         proc = Popen(
             [s, tmpfile, event],
-            shell=True,
             stdout=PIPE, stderr=PIPE
         )
         stdout, stderr = proc.communicate()
