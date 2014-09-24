@@ -56,7 +56,9 @@ def index():
 
     # Allow Github IPs only
     if config.get('github_ips_only', True):
-        src_ip = ip_address(request.remote_addr)
+        src_ip = ip_address(
+            u'{}'.format(request.remote_addr)  # Fix stupid ipaddress issue
+        )
         for valid_ip in whitelist:
             if src_ip in ip_network(valid_ip):
                 break
