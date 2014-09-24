@@ -94,16 +94,6 @@ executable and has a shebang. A simple example in Python could be:
         f.write(json.dumps(payload))
 
 
-Test
-====
-
-The following will launch the Flask web server in debug mode at port ``5000``.
-
-::
-
-    python webhooks.py
-
-
 Deploy
 ======
 
@@ -125,6 +115,37 @@ VirtualHost file:
         WSGIScriptAlias /webhooks /var/www/site.com/my/python-github-webhooks/webhooks.py
 
     </VirtualHost>
+
+You can now add that URL to your Github repository settings:
+
+    https://github.com/youruser/my.site.com/settings/hooks
+
+And add a Webhook to the WSGI script URL:
+
+::
+
+   http://my.site.com/webhooks
+
+
+Debug
+=====
+
+When running in Apache, the ``stderr`` of the hooks that return non-zero will
+be logged in Apache's error logs. For example:
+
+::
+
+    sudo tail -f /var/log/apache2/error.log
+
+Will log errors in your scripts if printed to ``stderr``.
+
+You can also launch the Flask web server in debug mode at port ``5000``.
+
+::
+
+    python webhooks.py
+
+This can help debug problem with the WSGI application itself.
 
 
 License
