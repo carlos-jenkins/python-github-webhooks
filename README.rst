@@ -30,7 +30,7 @@ You can configure what the application does by changing ``config.json``:
 ::
 
     {
-        "github_ips_only": false,
+        "github_ips_only": true,
         "enforce_secret": "",
         "return_scripts_info": true
     }
