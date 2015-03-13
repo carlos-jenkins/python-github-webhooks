@@ -73,8 +73,8 @@ def index():
         if sha_name != 'sha1':
             abort(501)
 
-        # HMAC requires its key to be bytes, but data is strings.
-        mac = hmac.new(secret, msg=data, digestmod=sha1)
+        # HMAC requires the key to be bytes, but data is string
+        mac = hmac.new(secret, msg=request.data, digestmod=sha1)
         if not hmac.compare_digest(mac.hexdigest(), signature):
             abort(403)
 
