@@ -44,8 +44,6 @@ def index():
     path = normpath(abspath(dirname(__file__)))
     hooks = join(path, 'hooks')
 
-    whitelist = requests.get('https://api.github.com/meta').json()['hooks']
-
     # Only POST is implemented
     if request.method != 'POST':
         abort(501)
@@ -59,6 +57,8 @@ def index():
         src_ip = ip_address(
             u'{}'.format(request.remote_addr)  # Fix stupid ipaddress issue
         )
+        whitelist = requests.get('https://api.github.com/meta').json()['hooks']
+
         for valid_ip in whitelist:
             if src_ip in ip_network(valid_ip):
                 break
