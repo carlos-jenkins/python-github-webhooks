@@ -118,7 +118,7 @@ VirtualHost file:
 
 You can now add that URL to your Github repository settings:
 
-    https://github.com/youruser/my.site.com/settings/hooks
+    https://github.com/youruser/myrepo/settings/hooks
 
 And add a Webhook to the WSGI script URL:
 
@@ -153,7 +153,7 @@ License
 
 ::
 
-   Copyright (C) 2014 Carlos Jenkins <carlos@jenkins.co.cr>
+   Copyright (C) 2014-2015 Carlos Jenkins <carlos@jenkins.co.cr>
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
