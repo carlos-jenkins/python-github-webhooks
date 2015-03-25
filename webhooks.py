@@ -74,8 +74,8 @@ def index():
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(secret, msg=request.data, digestmod=sha1)
-        if not hmac.compare_digest(mac.hexdigest(), signature):
+        mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
+        if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
             abort(403)
 
     # Implement ping
