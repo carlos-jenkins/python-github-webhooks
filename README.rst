@@ -94,8 +94,8 @@ executable and has a shebang. A simple example in Python could be:
         f.write(json.dumps(payload))
 
 
-Deploy
-======
+Deploy in Apache
+==================
 
 To deploy in Apache, just add a ``WSGIScriptAlias`` directive to your
 VirtualHost file:
@@ -126,6 +126,18 @@ And add a Webhook to the WSGI script URL:
 
    http://my.site.com/webhooks
 
+Deploy in a Docker container
+============================
+
+To deploy in a docker container, you have to expose the port 5000, for
+example with the following command:
+::
+    docker run -d --name webhooks -p 5000:5000 lrineau/python-github-webhooks
+
+You can also mount volume to setup the ``hooks/`` directory, and the file
+``config.json``:
+::
+    docker run -d --name webhooks -v /path/to/my/hooks:/src/hooks -v /path/to/my/config.json:/src/config.json -p 5000:5000 lrineau/python-github-webhooks
 
 Debug
 =====
