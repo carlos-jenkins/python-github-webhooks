@@ -86,21 +86,44 @@ def index():
     # Gather data
     try:
         payload = loads(request.data)
+
+        # Determining the branch is tricky, as it only appears for certain event types an at different levels
+        branch = None
+        try:
+            # Case 1: a ref_type indicates the type of ref. This is create and delete events.
+            if 'ref_type' in payload:
+                if payload['ref_type'] == 'branch':
+                    branch = payload['ref']
+            # Case 2: a pull_request object is involved. This is pull_request and pull_request_review_comment events.
+            elif 'pull_request' in payload:
+                # This is the TARGET branch for the pull-request, not the source branch
+                branch = payload['pull_request']['base']['ref']
+            elif event in ['push']:
+                # Push events provide a full Git ref in 'ref' and not a 'ref_type'. Isn't that great?
+                branch = payload['ref'].split('/')[2]
+        except KeyError:
+            # If the payload structure isn't what we expect, we'll live without the branch name
+            pass
+
+        # All current events have a repository, but some legacy events do not, so let's be safe
+        name = payload['repository']['name'] if 'repository' in payload else None
+
         meta = {
-            'name': payload['repository']['name'],
-            'branch': payload['ref'].split('/')[2],
+            'name': name,
+            'branch': branch,
             'event': event
         }
     except:
         abort(400)
 
     # Possible hooks
-    scripts = [
-        join(hooks, '{event}-{name}-{branch}'.format(**meta)),
-        join(hooks, '{event}-{name}'.format(**meta)),
-        join(hooks, '{event}'.format(**meta)),
-        join(hooks, 'all')
-    ]
+    scripts = []
+    if branch and name:
+        scripts.append(join(hooks, '{event}-{name}-{branch}'.format(**meta)))
+    if name:
+        scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
+    scripts.append(join(hooks, '{event}'.format(**meta)))
+    scripts.append(join(hooks, 'all'))
 
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]

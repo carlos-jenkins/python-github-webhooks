@@ -93,6 +93,9 @@ executable and has a shebang. A simple example in Python could be:
     with open(outfile, 'w') as f:
         f.write(json.dumps(payload))
 
+Not all events have an associated branch, so a branch-specific hook cannot
+fire for such events. For events that contain a pull_request object, the
+base branch (target for the pull request) is used, not the head branch.
 
 Deploy
 ======
