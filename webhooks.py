@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2014 Carlos Jenkins <carlos@jenkins.co.cr>
+# Copyright (C) 2014, 2015 Carlos Jenkins <carlos@jenkins.co.cr>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,35 +86,45 @@ def index():
     # Gather data
     try:
         payload = loads(request.data)
-
-        # Determining the branch is tricky, as it only appears for certain event types an at different levels
-        branch = None
-        try:
-            # Case 1: a ref_type indicates the type of ref. This is create and delete events.
-            if 'ref_type' in payload:
-                if payload['ref_type'] == 'branch':
-                    branch = payload['ref']
-            # Case 2: a pull_request object is involved. This is pull_request and pull_request_review_comment events.
-            elif 'pull_request' in payload:
-                # This is the TARGET branch for the pull-request, not the source branch
-                branch = payload['pull_request']['base']['ref']
-            elif event in ['push']:
-                # Push events provide a full Git ref in 'ref' and not a 'ref_type'. Isn't that great?
-                branch = payload['ref'].split('/')[2]
-        except KeyError:
-            # If the payload structure isn't what we expect, we'll live without the branch name
-            pass
-
-        # All current events have a repository, but some legacy events do not, so let's be safe
-        name = payload['repository']['name'] if 'repository' in payload else None
-
-        meta = {
-            'name': name,
-            'branch': branch,
-            'event': event
-        }
     except:
         abort(400)
+
+    # Determining the branch is tricky, as it only appears for certain event
+    # types an at different levels
+    branch = None
+    try:
+        # Case 1: a ref_type indicates the type of ref.
+        # This true for create and delete events.
+        if 'ref_type' in payload:
+            if payload['ref_type'] == 'branch':
+                branch = payload['ref']
+
+        # Case 2: a pull_request object is involved. This is pull_request and
+        # pull_request_review_comment events.
+        elif 'pull_request' in payload:
+            # This is the TARGET branch for the pull-request, not the source
+            # branch
+            branch = payload['pull_request']['base']['ref']
+
+        elif event in ['push']:
+            # Push events provide a full Git ref in 'ref' and not a 'ref_type'.
+            branch = payload['ref'].split('/')[2]
+
+    except KeyError:
+        # If the payload structure isn't what we expect, we'll live without
+        # the branch name
+        pass
+
+    # All current events have a repository, but some legacy events do not,
+    # so let's be safe
+    name = payload['repository']['name'] if 'repository' in payload else None
+
+    meta = {
+        'name': name,
+        'branch': branch,
+        'event': event
+    }
+    logging.info('Metadata:\n{}'.format(dumps(meta)))
 
     # Possible hooks
     scripts = []
