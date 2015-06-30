@@ -93,7 +93,7 @@ def index():
             # Case 1: a ref_type indicates the type of ref. This is create and delete events.
             if 'ref_type' in payload:
                 if payload['ref_type'] == 'branch':
-                    branch = paylaod['ref']
+                    branch = payload['ref']
             # Case 2: a pull_request object is involved. This is pull_request and pull_request_review_comment events.
             elif 'pull_request' in payload:
                 # This is the TARGET branch for the pull-request, not the source branch
