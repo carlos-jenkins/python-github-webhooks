@@ -140,15 +140,16 @@ def index():
     if not scripts:
         return ''
 
-    # Save payload to temporal file
-    _, tmpfile = mkstemp()
-    with open(tmpfile, 'w') as pf:
-        pf.write(dumps(payload))
-
     # Store return information for each script run
     ran = {}
 
+    # Save payload to temporal file
+    _, tmpfile = mkstemp()
+
     try:
+        with open(tmpfile, 'w') as pf:
+            pf.write(dumps(payload))
+
         # Run scripts
         for s in scripts:
 
