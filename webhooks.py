@@ -145,30 +145,33 @@ def index():
     with open(tmpfile, 'w') as pf:
         pf.write(dumps(payload))
 
-    # Run scripts
+    # Store return information for each script run
     ran = {}
-    for s in scripts:
 
-        proc = Popen(
-            [s, tmpfile, event],
-            stdout=PIPE, stderr=PIPE
-        )
-        stdout, stderr = proc.communicate()
+    try:
+        # Run scripts
+        for s in scripts:
 
-        ran[basename(s)] = {
-            'returncode': proc.returncode,
-            'stdout': stdout,
-            'stderr': stderr,
-        }
+            proc = Popen(
+                [s, tmpfile, event],
+                stdout=PIPE, stderr=PIPE
+            )
+            stdout, stderr = proc.communicate()
 
-        # Log errors if a hook failed
-        if proc.returncode != 0:
-            logging.error('{} : {} \n{}'.format(
-                s, proc.returncode, stderr
+            ran[basename(s)] = {
+                'returncode': proc.returncode,
+                'stdout': stdout,
+                'stderr': stderr,
+            }
+
+            # Log errors if a hook failed
+            if proc.returncode != 0:
+                logging.error('{} : {} \n{}'.format(
+                    s, proc.returncode, stderr
             ))
-
-    # Remove temporal file
-    remove(tmpfile)
+    finally:
+        # Remove temporal file
+        remove(tmpfile)
 
     info = config.get('return_scripts_info', False)
     if not info:
