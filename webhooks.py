@@ -16,7 +16,7 @@
 # under the License.
 
 import logging
-from sys import stderr
+from sys import stderr, hexversion
 logging.basicConfig(stream=stderr)
 
 import hmac
@@ -75,8 +75,16 @@ def index():
 
         # HMAC requires the key to be bytes, but data is string
         mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
-        if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
-            abort(403)
+
+        # Python prior to 2.7.7 does not have hmac.compare_digest
+        if hexversion >= 0x020707F0:
+            if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
+                abort(403)
+        else:
+            # What compare_digest provides is protection against timing attacks; we
+            # can live without this protection for a web-based application
+            if not str(mac.hexdigest()) == str(signature):
+                abort(403)
 
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
