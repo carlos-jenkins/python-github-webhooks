@@ -81,8 +81,9 @@ def index():
             if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
                 abort(403)
         else:
-            # What compare_digest provides is protection against timing attacks; we
-            # can live without this protection for a web-based application
+            # What compare_digest provides is protection against timing
+            # attacks; we can live without this protection for a web-based
+            # application
             if not str(mac.hexdigest()) == str(signature):
                 abort(403)
 
