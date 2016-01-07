@@ -69,7 +69,11 @@ def index():
     secret = config.get('enforce_secret', '')
     if secret:
         # Only SHA1 is supported
-        sha_name, signature = request.headers.get('X-Hub-Signature').split('=')
+        header_signature = request.headers.get('X-Hub-Signature')
+        if header_signature is None:
+            abort(403)
+        
+        sha_name, signature = header_signature.split('=')
         if sha_name != 'sha1':
             abort(501)
 
