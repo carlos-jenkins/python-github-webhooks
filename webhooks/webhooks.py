@@ -141,9 +141,9 @@ def index():
     # Possible hooks
     scripts = []
     if branch and name:
-        scripts.append(join(hooks, '{event}-{name}-{branch}'.format(**meta)))
+        scripts.append(join(hooks, '{event}.{name}.{branch}'.format(**meta)))
     if name:
-        scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
+        scripts.append(join(hooks, '{event}.{name}'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
 
