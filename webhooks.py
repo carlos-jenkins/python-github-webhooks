@@ -163,7 +163,7 @@ def index():
     for s in scripts:
 
         proc = Popen(
-            [s, tmpfile, event],
+            [s, tmpfile, event, str(branch)],
             stdout=PIPE, stderr=PIPE
         )
         stdout, stderr = proc.communicate()
