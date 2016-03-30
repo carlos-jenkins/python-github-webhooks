@@ -16,8 +16,8 @@
 # under the License.
 
 import logging
-from sys import stderr, hexversion
-logging.basicConfig(stream=stderr)
+from sys import stdout, hexversion
+logging.basicConfig(stream=stdout, level=logging.INFO)
 
 import hmac
 from hashlib import sha1
@@ -94,6 +94,7 @@ def index():
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
     if event == 'ping':
+        logging.info("Ping received")
         return dumps({'msg': 'pong'})
 
     # Gather data
@@ -132,12 +133,19 @@ def index():
     # so let's be safe
     name = payload['repository']['name'] if 'repository' in payload else None
 
+
     meta = {
         'name': name,
         'branch': branch,
         'event': event
     }
-    logging.info('Metadata:\n{}'.format(dumps(meta)))
+
+    if event == 'push' and payload['deleted']:
+        logging.info("Skipping push for deletion for %s" % meta)
+        return "Skipped"
+
+
+    logging.info('Metadata: {}'.format(dumps(meta)))
 
     # Possible hooks
     scripts = []
@@ -193,4 +201,4 @@ def index():
 
 
 if __name__ == '__main__':
-    application.run(debug=True, host='0.0.0.0')
+    application.run(debug=False, host='0.0.0.0', port=8080)
