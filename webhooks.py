@@ -122,7 +122,7 @@ def index():
 
         elif event in ['push']:
             # Push events provide a full Git ref in 'ref' and not a 'ref_type'.
-            branch = payload['ref'].split('/')[2]
+            branch = payload['ref'].split('/', 2)[2]
 
     except KeyError:
         # If the payload structure isn't what we expect, we'll live without
