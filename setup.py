@@ -84,7 +84,10 @@ setup(
                       'ipaddress',
                       'requests',
                       'gunicorn',
-                      'subprocess32'],
+                      'subprocess32',
+                      'pyopenssl',
+                      'ndg-httpsclient',
+                      'pyasn1'],
     # install_requires=required,
 
     # List additional groups of dependencies here (e.g. development
