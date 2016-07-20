@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2014, 2015 Carlos Jenkins <carlos@jenkins.co.cr>
+# Copyright (C) 2014, 2015, 2016 Carlos Jenkins <carlos@jenkins.co.cr>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
 from tempfile import mkstemp
-from os import access, X_OK, remove
+from os import access, X_OK, remove, fdopen
 from os.path import isfile, abspath, normpath, dirname, join, basename
 
 import requests
@@ -153,8 +153,8 @@ def index():
         return ''
 
     # Save payload to temporal file
-    _, tmpfile = mkstemp()
-    with open(tmpfile, 'w') as pf:
+    osfd, tmpfile = mkstemp()
+    with fdopen(osfd, 'w') as pf:
         pf.write(dumps(payload))
 
     # Run scripts
