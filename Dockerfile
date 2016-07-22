@@ -1,4 +1,4 @@
-FROM python:3.5.2-alpine
+FROM python:2.7-alpine
 MAINTAINER "Matjaž Finžgar" <matjaz@finzgar.net>
 
 WORKDIR /app
