@@ -1,14 +1,10 @@
-FROM fedora:latest
-MAINTAINER "Laurent Rineau" <laurent.rineau@cgal.org>
+FROM python:3.5.2-alpine
+MAINTAINER "Matjaž Finžgar" <matjaz@finzgar.net>
 
-RUN yum -y update
-RUN yum -y install python-pip && yum clean all
+WORKDIR /app
 
-ADD LICENSE requirements.txt webhooks.py config.json hooks /src/
-
-RUN cd /src; pip install -r requirements.txt
+COPY . /app
+RUN pip install -r requirements.txt
 
 EXPOSE 5000
-
-WORKDIR /src
-CMD ["python", "/src/webhooks.py"]
+CMD ["python", "webhooks.py"]
