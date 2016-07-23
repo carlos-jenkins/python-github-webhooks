@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+# Python Example for Python GitHub Webhooks
+# File: push-myrepo-master
+
+import sys
+import json
+import time
+
+payloadfile = sys.argv[1]
+event = sys.argv[2]
+
+timestamp = time.strftime('%Y%m%d%H%M%S')
+
+with open(payloadfile, 'r') as jsf:
+    payload = json.loads(jsf.read())
+
+# ## Do something with the payload
+name = payload['repository']['name']
+outfile = '/tmp/hook-{}-{}-{}.log'.format(name, event, timestamp)
+
+with open(outfile, 'w') as f:
+    f.write(json.dumps(payload))

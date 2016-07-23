@@ -34,19 +34,18 @@ from flask import Flask, request, abort
 
 application = Flask(__name__)
 
-
-@application.route('/', methods=['GET', 'POST'])
+@application.route('/github-webhook/', methods=['GET', 'POST'])
 def index():
     """
     Main WSGI application entry.
     """
 
-    path = normpath(abspath(dirname(__file__)))
-    hooks = join(path, 'hooks')
-
     # Only POST is implemented
     if request.method != 'POST':
         abort(501)
+
+    path = normpath(abspath(dirname(__file__)))
+    hooks = join(path, 'hooks')
 
     # Load config
     with open(join(path, 'config.json'), 'r') as cfg:
@@ -142,9 +141,9 @@ def index():
     # Possible hooks
     scripts = []
     if branch and name:
-        scripts.append(join(hooks, '{event}-{name}-{branch}'.format(**meta)))
+        scripts.append(join(hooks, '{event}.{name}.{branch}'.format(**meta)))
     if name:
-        scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
+        scripts.append(join(hooks, '{event}.{name}'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
 
@@ -157,6 +156,8 @@ def index():
     osfd, tmpfile = mkstemp()
     with fdopen(osfd, 'w') as pf:
         pf.write(dumps(payload))
+
+    logging.debug("Webhook Payload: \n{}".format(dumps(payload)))
 
     # Run scripts
     ran = {}
