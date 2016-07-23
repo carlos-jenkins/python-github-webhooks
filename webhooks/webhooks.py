@@ -40,12 +40,12 @@ def index():
     Main WSGI application entry.
     """
 
-    path = normpath(abspath(dirname(__file__)))
-    hooks = join(path, 'hooks')
-
     # Only POST is implemented
     if request.method != 'POST':
         abort(501)
+
+    path = normpath(abspath(dirname(__file__)))
+    hooks = join(path, 'hooks')
 
     # Load config
     with open(join(path, 'config.json'), 'r') as cfg:
@@ -156,6 +156,8 @@ def index():
     osfd, tmpfile = mkstemp()
     with fdopen(osfd, 'w') as pf:
         pf.write(dumps(payload))
+
+    logging.debug("Webhook Payload: \n{}".format(dumps(payload)))
 
     # Run scripts
     ran = {}
