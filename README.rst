@@ -33,6 +33,7 @@ You can configure what the application does by changing ``config.json``:
         "github_ips_only": true,
         "enforce_secret": "",
         "return_scripts_info": true
+        "hooks_path": "/.../hooks/"
     }
 
 :github_ips_only: Restrict application to be called only by GitHub IPs. IPs
@@ -48,6 +49,8 @@ You can configure what the application does by changing ``config.json``:
  you will be able to see the result of your hooks from within your GitHub
  hooks configuration page (see "Recent Deliveries").
  Default: ``true``.
+ :hooks_path: Configures a path to import the hooks. If not set, it'll import
+ the hooks from the default location (/.../python-github-webhooks/hooks)
 
 
 Adding Hooks

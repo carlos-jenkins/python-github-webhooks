@@ -42,7 +42,6 @@ def index():
     """
 
     path = normpath(abspath(dirname(__file__)))
-    hooks = join(path, 'hooks')
 
     # Only POST is implemented
     if request.method != 'POST':
@@ -51,6 +50,8 @@ def index():
     # Load config
     with open(join(path, 'config.json'), 'r') as cfg:
         config = loads(cfg.read())
+
+    hooks = config.get('hooks_path', join(path, 'hooks'))
 
     # Allow Github IPs only
     if config.get('github_ips_only', True):
