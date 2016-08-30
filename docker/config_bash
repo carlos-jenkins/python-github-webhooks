@@ -1,0 +1,5 @@
+PORT=8088
+NAME="python-github-webhooks"
+TIMESTAMP=$(/bin/date +%s)
+CONTAINER_NAME="test_${NAME}_image_${TIMESTAMP}"
+IMAGE="orca.quixey.com/${NAME}"
