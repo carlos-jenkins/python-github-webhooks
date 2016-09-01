@@ -17,7 +17,6 @@ RUN pip install -r requirements.txt && \
 RUN mkdir -p /etc/puppetlabs/code && \
     chown puppet:puppet /etc/puppetlabs/code
 
-ENV GIT_TOKEN 00a203bba04aece5400b58c00a2eaab423b442c3
 COPY docker/.ssh /home/puppet/.ssh
 RUN  echo "    IdentityFile ~/.ssh/id_rsa_github" >> /etc/ssh/ssh_config && \
      ssh-keyscan github.com >> /home/puppet/.ssh/known_hosts && \
