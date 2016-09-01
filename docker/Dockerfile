@@ -29,7 +29,6 @@ USER puppet
 RUN git clone git@github.com:quixey/puppet-master.git puppet-master && \
     cp -R /app/puppet-master/puppet/code /etc/puppetlabs
 
-
 VOLUME /etc/puppetlabs/code
 
 EXPOSE 5000
