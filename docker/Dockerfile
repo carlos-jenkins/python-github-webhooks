@@ -33,4 +33,4 @@ RUN git clone git@github.com:quixey/puppet-master.git puppet-master && \
 VOLUME /etc/puppetlabs/code
 
 EXPOSE 5000
-CMD ["python", "/app/webhooks.py"]
+CMD ["python", "/app/webhooks.py", "hooks/push"]
