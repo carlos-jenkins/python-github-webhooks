@@ -12,7 +12,7 @@ COPY . /app
 
 RUN pip install -r requirements.txt && \
     mkdir /app/puppet-master && \
-    chown puppet:puppet /app/puppet-master
+    chown -R puppet:puppet /app
 
 RUN mkdir -p /etc/puppetlabs/code && \
     chown puppet:puppet /etc/puppetlabs/code

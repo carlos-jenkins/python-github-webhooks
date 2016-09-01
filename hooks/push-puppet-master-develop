@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./update_p-m.sh
+/app/hooks/update_p-m.sh

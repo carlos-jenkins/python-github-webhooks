@@ -151,6 +151,7 @@ def index():
 
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
+    print "Scripts Found: ", scripts
     if not scripts:
         return ''
 
