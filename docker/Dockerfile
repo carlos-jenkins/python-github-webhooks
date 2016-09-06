@@ -17,12 +17,14 @@ RUN pip install -r requirements.txt && \
 RUN mkdir -p /etc/puppetlabs/code && \
     chown puppet:puppet /etc/puppetlabs/code
 
+RUN mkdir -p /var/log/python-github-webhooks && \
+    chown puppet:puppet /var/log/python-github-webhooks
+
 COPY docker/.ssh /home/puppet/.ssh
 RUN  echo "    IdentityFile ~/.ssh/id_rsa_github" >> /etc/ssh/ssh_config && \
      ssh-keyscan github.com >> /home/puppet/.ssh/known_hosts && \
      chown -R puppet:puppet /home/puppet/.ssh &&\
      chmod 0600 /home/puppet/.ssh/*
-
 
 USER puppet
 
@@ -32,4 +34,4 @@ RUN git clone git@github.com:quixey/puppet-master.git puppet-master && \
 VOLUME /etc/puppetlabs/code
 
 EXPOSE 5000
-CMD ["python", "/app/webhooks.py", "hooks/push"]
+CMD ["python", "/app/webhooks.py"]

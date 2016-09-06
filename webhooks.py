@@ -16,8 +16,13 @@
 # under the License.
 
 import logging
-from sys import stderr, hexversion
-logging.basicConfig(stream=stderr)
+from sys import hexversion
+logger = logging.getLogger()
+handler = logging.FileHandler('/var/log/python-github-webhooks/app.log')
+formatter = logging.Formatter(
+        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 import hmac
 from hashlib import sha1
@@ -127,6 +132,8 @@ def index():
     except KeyError:
         # If the payload structure isn't what we expect, we'll live without
         # the branch name
+        logging.warning("Bad Paylod")
+        logging.debug("Payload: {}".format(payload))
         pass
 
     # All current events have a repository, but some legacy events do not,
@@ -151,7 +158,7 @@ def index():
 
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
-    print "Scripts Found: ", scripts
+    logging.debug("Scripts Found: ", scripts)
     if not scripts:
         return ''
 
@@ -163,7 +170,7 @@ def index():
     # Run scripts
     ran = {}
     for s in scripts:
-
+        logging.debug("Running Script: ", s)
         proc = Popen(
             [s, tmpfile, event],
             stdout=PIPE, stderr=PIPE
@@ -184,6 +191,8 @@ def index():
 
     # Remove temporal file
     remove(tmpfile)
+
+    logging.debug("Ran results: {}".format(ran))
 
     info = config.get('return_scripts_info', False)
     if not info:
