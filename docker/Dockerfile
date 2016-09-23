@@ -11,6 +11,7 @@ WORKDIR /app
 COPY . /app
 
 RUN pip install -r requirements.txt && \
+    mkdir /app/cenconf && \
     mkdir /app/puppet-master && \
     chown -R puppet:puppet /app
 
@@ -29,7 +30,9 @@ RUN  echo "    IdentityFile ~/.ssh/id_rsa_github" >> /etc/ssh/ssh_config && \
 USER puppet
 
 RUN git clone git@github.com:quixey/puppet-master.git puppet-master && \
-    cp -R /app/puppet-master/puppet/code /etc/puppetlabs
+    cp -R /app/puppet-master/puppet/code /etc/puppetlabs && \
+    git clone git@github.com:quixey/cenconf.git cenconf && \
+    cp -R /app/cenconf /etc/puppetlabs/code/modules
 
 VOLUME /etc/puppetlabs/code
 
