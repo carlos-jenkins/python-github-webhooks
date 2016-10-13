@@ -1,3 +1,4 @@
 Flask
+boto3
 ipaddress
 requests

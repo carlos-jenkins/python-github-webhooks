@@ -27,6 +27,8 @@ RUN  echo "    IdentityFile ~/.ssh/id_rsa_github" >> /etc/ssh/ssh_config && \
      chown -R puppet:puppet /home/puppet/.ssh &&\
      chmod 0600 /home/puppet/.ssh/*
 
+RUN echo "*/1 * * * *    	puppet  /app/hooks/push" >> /etc/crontab
+
 USER puppet
 
 RUN git clone git@github.com:quixey/puppet-master.git puppet-master && \
