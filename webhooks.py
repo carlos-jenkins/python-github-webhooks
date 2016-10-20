@@ -99,7 +99,7 @@ def index():
 
     # Gather data
     try:
-        payload = loads(request.data)
+        payload = loads(request.data).decode('utf-8')
     except:
         abort(400)
 
@@ -171,8 +171,8 @@ def index():
 
         ran[basename(s)] = {
             'returncode': proc.returncode,
-            'stdout': stdout,
-            'stderr': stderr,
+            'stdout': stdout.decode('utf-8'),
+            'stderr': stderr.decode('utf-8'),
         }
 
         # Log errors if a hook failed
