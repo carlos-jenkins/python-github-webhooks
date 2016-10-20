@@ -142,8 +142,10 @@ To deploy in a Docker container you have to expose the port 5000, for example
 with the following command:
 
 ::
-
-    docker run -d --name webhooks -p 5000:5000 python-github-webhooks
+    
+    git clone http://github.com/carlos-jenkins/python-github-webhooks.git
+    docker build -t carlos-jenkins/python-github-webhooks python-github-webhooks
+    docker run -d --name webhooks -p 5000:5000 carlos-jenkins/python-github-webhooks
 
 You can also mount volume to setup the ``hooks/`` directory, and the file
 ``config.json``:
