@@ -15,8 +15,8 @@ RUN pip install -r requirements.txt && \
     mkdir /app/puppet-master && \
     chown -R puppet:puppet /app
 
-RUN mkdir -p /etc/puppetlabs/code && \
-    chown puppet:puppet /etc/puppetlabs/code
+RUN mkdir -p /etc/puppetlabs/code /etc/puppetlabs/r10k && \
+    chown puppet:puppet /etc/puppetlabs/code /etc/puppetlabs/r10k
 
 RUN mkdir -p /var/log/python-github-webhooks && \
     chown puppet:puppet /var/log/python-github-webhooks
@@ -33,8 +33,15 @@ USER puppet
 
 RUN git clone git@github.com:quixey/puppet-master.git puppet-master && \
     cp -R /app/puppet-master/puppet/code /etc/puppetlabs && \
+    cp -R /app/puppet-master/puppet/r10k /etc/puppetlabs && \
     git clone git@github.com:quixey/cenconf.git cenconf && \
     cp -R /app/cenconf /etc/puppetlabs/code/modules
+
+# Install hiera data
+RUN git clone git@github.com:quixey/puppet-hieradata.git /etc/puppetlabs/code/hieradata
+
+# Run r10k once to get latest updates
+RUN /opt/puppetlabs/puppet/bin/r10k deploy --puppetfile --detail
 
 VOLUME /etc/puppetlabs/code
 
