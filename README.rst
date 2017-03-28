@@ -25,7 +25,9 @@ Dependencies
 Setup
 =====
 
-You can configure what the application does by changing ``config.json``:
+You can configure what the application does by changing copying the sample
+config file ``config.json.sample`` to ``config.json`` and changing it to your
+needs:
 
 ::
 
