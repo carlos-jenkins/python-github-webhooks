@@ -79,7 +79,7 @@ def index():
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(str(secret), msg=request.data, digestmod="sha1")
+        mac = hmac.new(str(secret), msg=request.data, digestmod='sha1')
 
         # Python prior to 2.7.7 does not have hmac.compare_digest
         if hexversion >= 0x020707F0:
