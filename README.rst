@@ -125,11 +125,12 @@ VirtualHost file:
 
     </VirtualHost>
 
-You can now add that URL to your Github repository settings:
+You can now register the hook in your Github repository settings:
 
     https://github.com/youruser/myrepo/settings/hooks
 
-And add a Webhook to the WSGI script URL:
+To register the webhook select Content type: ``application/json`` and set the URL to the URL
+of your WSGI script:
 
 ::
 
