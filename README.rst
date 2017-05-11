@@ -125,7 +125,7 @@ VirtualHost file:
 
     </VirtualHost>
 
-You can now add that URL to your Github repository settings:
+You can now add that URL to your Github repository settings (select Content type: application/json):
 
     https://github.com/youruser/myrepo/settings/hooks
 
