@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+/app/hooks/update_p-m.sh
+/app/hooks/update_cenconf.sh
+
