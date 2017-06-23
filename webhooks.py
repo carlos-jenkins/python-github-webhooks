@@ -99,7 +99,7 @@ def index():
 
     # Gather data
     try:
-        payload = loads(request.data)
+        payload = request.get_json()
     except:
         abort(400)
 
@@ -168,6 +168,8 @@ def index():
             stdout=PIPE, stderr=PIPE
         )
         stdout, stderr = proc.communicate()
+        stout = stout.decode('utf-8')
+        stderr = stderr.decode('utf-8')
 
         ran[basename(s)] = {
             'returncode': proc.returncode,
