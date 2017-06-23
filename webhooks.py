@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2014, 2015, 2016 Carlos Jenkins <carlos@jenkins.co.cr>
