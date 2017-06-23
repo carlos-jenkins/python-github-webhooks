@@ -25,6 +25,13 @@ Dependencies
 Setup
 =====
 
+The first thing you must do after installation is copy ``config.example.json``
+to ``config.json`` by simply:
+
+::
+
+    cp config.example.json config.json
+
 You can configure what the application does by changing ``config.json``:
 
 ::
