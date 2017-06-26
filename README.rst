@@ -25,7 +25,7 @@ Dependencies
 Setup
 =====
 
-You can configure what the application does by copying the sample config file 
+You can configure what the application does by copying the sample config file
 ``config.json.sample`` to ``config.json`` and adapting it to your needs:
 
 ::
@@ -101,6 +101,11 @@ Not all events have an associated branch, so a branch-specific hook cannot
 fire for such events. For events that contain a pull_request object, the
 base branch (target for the pull request) is used, not the head branch.
 
+The payload structure depends on the event type. Please review:
+
+    https://developer.github.com/v3/activity/events/types/
+
+
 Deploy
 ======
 
@@ -144,7 +149,7 @@ To deploy in a Docker container you have to expose the port 5000, for example
 with the following command:
 
 ::
-    
+
     git clone http://github.com/carlos-jenkins/python-github-webhooks.git
     docker build -t carlos-jenkins/python-github-webhooks python-github-webhooks
     docker run -d --name webhooks -p 5000:5000 carlos-jenkins/python-github-webhooks
@@ -158,6 +163,27 @@ You can also mount volume to setup the ``hooks/`` directory, and the file
       -v /path/to/my/hooks:/src/hooks \
       -v /path/to/my/config.json:/src/config.json \
       -p 5000:5000 python-github-webhooks
+
+
+Test your deployment
+====================
+
+To test your hook you may use the GitHub REST API with ``curl``:
+
+    https://developer.github.com/v3/
+
+::
+
+    curl --user "<youruser>" https://api.github.com/repos/<youruser>/<myrepo>/hooks
+
+Take note of the test_url.
+
+::
+
+    curl --user "<youruser>" -i -X POST <test_url>
+
+You should be able to see any log error in your webapp.
+
 
 Debug
 =====
