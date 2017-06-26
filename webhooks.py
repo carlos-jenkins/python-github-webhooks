@@ -141,6 +141,11 @@ def index():
     }
     logging.info('Metadata:\n{}'.format(dumps(meta)))
 
+    # Skip push-delete
+    if event == 'push' and payload['deleted']:
+        logging.info('Skipping push-delete event for {}'.format(dumps(meta)))
+        return dumps({'status': 'skipped'})
+
     # Possible hooks
     scripts = []
     if branch and name:
@@ -153,7 +158,7 @@ def index():
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
     if not scripts:
-        return ''
+        return dumps({'status': 'nop'})
 
     # Save payload to temporal file
     osfd, tmpfile = mkstemp()
@@ -187,7 +192,7 @@ def index():
 
     info = config.get('return_scripts_info', False)
     if not info:
-        return ''
+        return dumps({'status': 'done'})
 
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)
