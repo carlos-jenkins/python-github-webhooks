@@ -168,13 +168,11 @@ def index():
             stdout=PIPE, stderr=PIPE
         )
         stdout, stderr = proc.communicate()
-        stout = stout.decode('utf-8')
-        stderr = stderr.decode('utf-8')
 
         ran[basename(s)] = {
             'returncode': proc.returncode,
-            'stdout': stdout,
-            'stderr': stderr,
+            'stdout': stdout.decode('utf-8'),
+            'stderr': stderr.decode('utf-8'),
         }
 
         # Log errors if a hook failed
