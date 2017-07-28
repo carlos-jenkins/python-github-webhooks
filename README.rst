@@ -156,14 +156,12 @@ with the following command:
       carlos-jenkins/python-github-webhooks
 
 
-You can also mount volume to setup the ``hooks/`` directory, and the file
-``config.json``:
+You can also mount a volume to setup the ``hooks/`` directory:
 
 ::
 
     docker run -d --name webhooks \
       -v /path/to/my/hooks:/src/hooks \
-      -v /path/to/my/config.json:/src/config.json \
       -p 5000:5000 python-github-webhooks
 
 
