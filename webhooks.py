@@ -24,7 +24,7 @@ from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
 from tempfile import mkstemp
-from os import access, X_OK, remove, fdopen
+from os import access, X_OK, remove, fdopen, environ
 from os.path import isfile, abspath, normpath, dirname, join, basename
 
 import requests
@@ -34,6 +34,15 @@ from flask import Flask, request, abort
 
 application = Flask(__name__)
 
+def env_var(key, default=None):
+    val = environ.get(key, default)
+    if val == 'True':
+        val = True
+    elif val == 'False':
+        val = False
+    elif val == 'None':
+        val = None
+    return val
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
@@ -47,14 +56,23 @@ def index():
     if request.method != 'POST':
         abort(501)
 
-    # Load config
-    with open(join(path, 'config.json'), 'r') as cfg:
-        config = loads(cfg.read())
-
-    hooks = config.get('hooks_path', join(path, 'hooks'))
+    # Load config from file
+    try:
+        with open(join(path, 'config.json'), 'r') as cfg:
+            config = loads(cfg.read())
+            hooks = config.get('hooks_path', join(path, 'hooks'))
+            github_ips_only = config.get('github_ips_only', True)
+            secret = config.get('enforce_secret', '')
+            info = config.get('return_scripts_info', False)
+    # ... or from ENV vars
+    except Exception:
+        hooks = env_var('WEBHOOKS_HOOKS_PATH', join(path, 'hooks'))
+        github_ips_only = env_var('WEBHOOKS_GITHUB_IPS_ONLY', True)
+        secret = env_var('WEBHOOKS_ENFORCE_SECRET', '')
+        info = env_var('WEBHOOKS_RETURN_SCRIPTS_INFO', False)
 
     # Allow Github IPs only
-    if config.get('github_ips_only', True):
+    if github_ips_only:
         src_ip = ip_address(
             u'{}'.format(request.remote_addr)  # Fix stupid ipaddress issue
         )
@@ -67,7 +85,6 @@ def index():
             abort(403)
 
     # Enforce secret
-    secret = config.get('enforce_secret', '')
     if secret:
         # Only SHA1 is supported
         header_signature = request.headers.get('X-Hub-Signature')
@@ -190,7 +207,6 @@ def index():
     # Remove temporal file
     remove(tmpfile)
 
-    info = config.get('return_scripts_info', False)
     if not info:
         return dumps({'status': 'done'})
 

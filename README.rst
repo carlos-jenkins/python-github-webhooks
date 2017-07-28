@@ -152,7 +152,9 @@ with the following command:
 
     git clone http://github.com/carlos-jenkins/python-github-webhooks.git
     docker build -t carlos-jenkins/python-github-webhooks python-github-webhooks
-    docker run -d --name webhooks -p 5000:5000 carlos-jenkins/python-github-webhooks
+    docker run -d --name webhooks -e WEBHOOKS_GITHUB_IPS_ONLY=False -p 5000:5000 \
+      carlos-jenkins/python-github-webhooks
+
 
 You can also mount volume to setup the ``hooks/`` directory, and the file
 ``config.json``:
