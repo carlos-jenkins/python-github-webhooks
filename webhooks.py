@@ -56,7 +56,7 @@ def index():
     # Allow Github IPs only
     if config.get('github_ips_only', True):
         src_ip = ip_address(
-            u'{}'.format(request.remote_addr)  # Fix stupid ipaddress issue
+            u'{}'.format(request.access_route[0])  # Fix stupid ipaddress issue
         )
         whitelist = requests.get('https://api.github.com/meta').json()['hooks']
 
@@ -64,6 +64,9 @@ def index():
             if src_ip in ip_network(valid_ip):
                 break
         else:
+            logging.error('IP {} not allowed'.format(
+                src_ip
+            ))
             abort(403)
 
     # Enforce secret
