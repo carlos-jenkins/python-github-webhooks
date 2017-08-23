@@ -34,7 +34,7 @@ You can configure what the application does by copying the sample config file
         "github_ips_only": true,
         "enforce_secret": "",
         "return_scripts_info": true
-        "hooks_path": "/.../hooks/"
+        "hooks_path": "/absolute/path/to/your/hooks/"
     }
 
 :github_ips_only: Restrict application to be called only by GitHub IPs. IPs
@@ -140,7 +140,7 @@ of your WSGI script:
 
 ::
 
-   http://my.site.com/webhooks
+   http://my.site.com/webhooks/
 
 Docker
 ------

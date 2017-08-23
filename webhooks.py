@@ -18,6 +18,8 @@
 import logging
 from sys import stderr, hexversion
 logging.basicConfig(stream=stderr)
+# If you need troubleshooting logs, comment the previous line and uncomment the next one
+#logging.basicConfig(filename=/your/writable/path/for/hooks.log, level=10)
 
 import hmac
 from hashlib import sha1
@@ -45,6 +47,7 @@ def index():
 
     # Only POST is implemented
     if request.method != 'POST':
+        logging.warning("We got a $s request, this isn't supported", request.method)
         abort(501)
 
     # Load config
@@ -52,6 +55,8 @@ def index():
         config = loads(cfg.read())
 
     hooks = config.get('hooks_path', join(path, 'hooks'))
+
+    logging.info("Config loaded, handling request")
 
     # Allow Github IPs only
     if config.get('github_ips_only', True):
@@ -64,6 +69,7 @@ def index():
             if src_ip in ip_network(valid_ip):
                 break
         else:
+            logging.warning("We got a request from unauthorized IP: %s", src_ip)
             abort(403)
 
     # Enforce secret
@@ -72,36 +78,41 @@ def index():
         # Only SHA1 is supported
         header_signature = request.headers.get('X-Hub-Signature')
         if header_signature is None:
+            logging.warning("No signature found when expecting one")
             abort(403)
 
         sha_name, signature = header_signature.split('=')
         if sha_name != 'sha1':
+            logging.warning("Unsupported signature mech: %s", sha_name)
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(str(secret), msg=request.data, digestmod='sha1')
+        mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
 
         # Python prior to 2.7.7 does not have hmac.compare_digest
         if hexversion >= 0x020707F0:
             if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
+                logging.warning("Invalid digest comparaison")
                 abort(403)
         else:
             # What compare_digest provides is protection against timing
             # attacks; we can live without this protection for a web-based
             # application
             if not str(mac.hexdigest()) == str(signature):
+                logging.warning("Hex digest aren't equals")
                 abort(403)
 
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
     if event == 'ping':
+        logging.warning("Ping Pong")
         return dumps({'msg': 'pong'})
 
     # Gather data
     try:
         payload = request.get_json()
     except Exception:
-        logging.warning('Request parsing failed')
+        logging.warning('Request parsing failed with exception %s', Exception)
         abort(400)
 
     # Determining the branch is tricky, as it only appears for certain event
