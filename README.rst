@@ -33,7 +33,7 @@ You can configure what the application does by copying the sample config file
     {
         "github_ips_only": true,
         "enforce_secret": "",
-        "return_scripts_info": true
+        "return_scripts_info": true,
         "hooks_path": "/.../hooks/"
     }
 
