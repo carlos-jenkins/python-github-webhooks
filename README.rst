@@ -13,6 +13,12 @@ Install
     git clone https://github.com/carlos-jenkins/python-github-webhooks.git
     cd python-github-webhooks
 
+For centos
+==========
+
+::
+
+    sudo yum -y install mod_wsgi
 
 Dependencies
 ============
