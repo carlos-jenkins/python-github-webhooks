@@ -34,6 +34,13 @@ from flask import Flask, request, abort
 
 application = Flask(__name__)
 
+def get_path():
+    return normpath(abspath(dirname(__file__)))
+
+def get_config():
+    with open(join(get_path(), 'config.json'), 'r') as cfg:
+        config = loads(cfg.read())
+        return config
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
@@ -41,16 +48,12 @@ def index():
     Main WSGI application entry.
     """
 
-    path = normpath(abspath(dirname(__file__)))
-
     # Only POST is implemented
     if request.method != 'POST':
         abort(501)
 
-    # Load config
-    with open(join(path, 'config.json'), 'r') as cfg:
-        config = loads(cfg.read())
-
+    path = get_path()
+    config = get_config()
     hooks = config.get('hooks_path', join(path, 'hooks'))
 
     # Allow Github IPs only
@@ -203,4 +206,4 @@ def index():
 
 
 if __name__ == '__main__':
-    application.run(debug=True, host='0.0.0.0')
+    application.run(debug=True, host='0.0.0.0', port=get_config().get('port', 5000))
