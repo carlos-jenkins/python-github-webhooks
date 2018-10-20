@@ -1,11 +1,11 @@
 #!/bin/sh
 
-if [ ! -f "$SNAP_USER_COMMON/config.json" ]; then
-    cp "$SNAP/config.json.sample" "$SNAP_USER_COMMON/config.json"
+if [ ! -f "$SNAP_COMMON/config.json" ]; then
+    cp "$SNAP/config.json.sample" "$SNAP_COMMON/config.json"
 fi
 
-if [ ! -L "$SNAP_USER_COMMON/webhooks.py" ]; then
-    ln -sf "$SNAP/webhooks.py" "$SNAP_USER_COMMON"
+if [ ! -L "$SNAP_COMMON/webhooks.py" ]; then
+    ln -sf "$SNAP/webhooks.py" "$SNAP_COMMON"
 fi
 
 if [ "X$SNAP_ARCH" = "Xamd64" ]; then
@@ -21,7 +21,7 @@ fi
 export PATH=$SNAP/usr/bin:$PATH
 export LD_LIBRARY_PATH=$SNAP/usr/lib/$ARCH:$SNAP/usr/lib:$LD_LIBRARY_PATH
 
-cd "$SNAP_USER_COMMON"
+cd "$SNAP_COMMON"
 mkdir -p hooks
 
 exec env $SNAP/usr/bin/python3 ./webhooks.py $@
