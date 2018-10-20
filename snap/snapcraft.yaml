@@ -1,0 +1,34 @@
+name: python-github-webhooks
+version: git
+summary: Simple Python WSGI application to handle Github webhooks
+description: |
+  Simple Python WSGI application to handle Github webhooks
+
+grade: stable
+confinement: strict
+
+parts:
+  python-github-webhooks:
+    plugin: python
+    requirements: requirements.txt
+    source: .
+    override-build: |
+      snapcraftctl build
+      install -m 755 webhooks.py $SNAPCRAFT_PART_INSTALL
+      install -m 644 config.json.sample $SNAPCRAFT_PART_INSTALL
+      ln -s python3 $SNAPCRAFT_PART_INSTALL/usr/bin/python || true
+    stage-packages:
+     - git
+
+  runner:
+    plugin: dump
+    source: snap/scripts
+    organize:
+      webhooks: bin/run.sh
+
+apps:
+  python-github-webhooks:
+    command: ./run.sh
+    plugs:
+      - network
+      - network-bind
