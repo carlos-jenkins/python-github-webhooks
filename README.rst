@@ -230,9 +230,10 @@ License
 Credits
 =======
 
-This project is just the reinterpretation and merge of two approaches:
+This project is just the reinterpretation and merge of two approaches and a modification of Carlos Jenkins' work:
 
 - `github-webhook-wrapper <https://github.com/datafolklabs/github-webhook-wrapper>`_.
 - `flask-github-webhook <https://github.com/razius/flask-github-webhook>`_.
+- `python-github-webhooks <https://github.com/carlos-jenkins/python-github-webhooks>`_.
 
 Thanks.

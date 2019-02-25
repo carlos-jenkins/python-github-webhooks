@@ -14,13 +14,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-
 import logging
 from sys import stderr, hexversion
-logging.basicConfig(stream=stderr)
 
 import hmac
-from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
 from tempfile import mkstemp
@@ -31,6 +28,7 @@ import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
 
+logging.basicConfig(stream=stderr)
 
 application = Flask(__name__)
 
@@ -43,13 +41,22 @@ def index():
 
     path = normpath(abspath(dirname(__file__)))
 
-    # Only POST is implemented
+    # Only POST is implemented - same effect as removing 'GET' in methods above
     if request.method != 'POST':
-        abort(501)
+        abort(405)
 
     # Load config
-    with open(join(path, 'config.json'), 'r') as cfg:
-        config = loads(cfg.read())
+    if isfile(join(path, 'config.json')):
+        with open(join(path, 'config.json'), 'r') as cfg:
+            config = loads(cfg.read())
+    else:
+        # abort(503, 'Configuration file config.json is missing.')
+        config = {
+            "github_ips_only": False,
+            "enforce_secret": "",
+            "return_scripts_info": False,
+            "hooks_path": "/missing"
+        }
 
     hooks = config.get('hooks_path', join(path, 'hooks'))
 
