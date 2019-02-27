@@ -17,7 +17,6 @@
 
 import logging
 from sys import stderr, hexversion
-logging.basicConfig(stream=stderr)
 
 import hmac
 from hashlib import sha1
@@ -30,7 +29,9 @@ from os.path import isfile, abspath, normpath, dirname, join, basename
 import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
+from flask import jsonify
 
+logging.basicConfig(stream=stderr)
 
 application = Flask(__name__)
 
@@ -200,6 +201,11 @@ def index():
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)
     return output
+
+
+@application.route('/status', methods=['GET'])
+def status():
+    return jsonify({'status': 'ok'})
 
 
 if __name__ == '__main__':
