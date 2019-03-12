@@ -30,7 +30,7 @@ class WebhooksTest(unittest.TestCase):
         response = self.app.post('/')
         self.show_response(response)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, b'{"msg": "pong"}')
+        self.assertEqual(response.data, b'{"msg":"pong"}\n')
 
     def test_unit_notfound(self):
         response = self.app.get('/notfound')
