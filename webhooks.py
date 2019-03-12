@@ -26,7 +26,7 @@ from os.path import isfile, abspath, normpath, dirname, join, basename
 
 import requests
 from ipaddress import ip_address, ip_network
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
 
 logging.basicConfig(stream=stderr)
 
@@ -105,7 +105,7 @@ def index():
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
     if event == 'ping':
-        return dumps({'msg': 'pong'})
+        return jsonify({'msg': 'pong'})
 
     # Gather data
     try:
@@ -154,7 +154,7 @@ def index():
     # Skip push-delete
     if event == 'push' and payload['deleted']:
         logging.info('Skipping push-delete event for {}'.format(dumps(meta)))
-        return dumps({'status': 'skipped'})
+        return jsonify({'status': 'skipped'})
 
     # Possible hooks
     scripts = []
@@ -168,7 +168,7 @@ def index():
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
     if not scripts:
-        return dumps({'status': 'nop'})
+        return jsonify({'status': 'nop'})
 
     # Save payload to temporal file
     osfd, tmpfile = mkstemp()
@@ -202,11 +202,11 @@ def index():
 
     info = config.get('return_scripts_info', False)
     if not info:
-        return dumps({'status': 'done'})
+        return jsonify({'status': 'done'})
 
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)
-    return output
+    return jsonify(ran)
 
 
 if __name__ == '__main__':
