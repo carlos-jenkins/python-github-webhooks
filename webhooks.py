@@ -125,6 +125,8 @@ def index():
 
     # Determining the branch is tricky, as it only appears for certain event
     # types an at different levels
+    if payload is None:
+        payload = {}
     branch = None
     try:
         # Case 1: a ref_type indicates the type of ref.
