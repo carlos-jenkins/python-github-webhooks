@@ -30,6 +30,13 @@ from flask import Flask, request, abort, jsonify
 
 logging.basicConfig(stream=stderr)
 
+# Import hook modules
+try:
+    from hooks import has_hook, run_hook
+except Exception as e:
+    logging.error('Import hooks failed')
+    raise(e)
+
 application = Flask(__name__)
 
 
@@ -105,7 +112,9 @@ def index():
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
     if event == 'ping':
-        return jsonify({'msg': 'pong'})
+        if has_hook(event):
+            return jsonify(run_hook(event))
+        return jsonify({'msg': 'pang'})
 
     # Gather data
     try:
