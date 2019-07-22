@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY config.json /app
 COPY webhooks.py /app
-COPY hooks /app
+RUN mkdir /app/hooks
+COPY hooks/* /app/hooks
 COPY requirements.txt /app
 
 RUN pip install -r requirements.txt
