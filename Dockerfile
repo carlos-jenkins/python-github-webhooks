@@ -17,7 +17,7 @@ ENV PATH $PATH:/root/google-cloud-sdk/bin
 
 COPY . /app
 
-RUN chmod +x /app/hooks/*
+RUN chmod +x hooks/*
 
 EXPOSE 5000
 CMD ["python", "webhooks.py"]
