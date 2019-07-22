@@ -158,30 +158,30 @@ def index():
         scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
-    proc = Popen(
-            ["ls", "-l", "hooks"],
-            stdout=PIPE, stderr=PIPE
-        )
-    stdout, stderr = proc.communicate()
-    logging.error('{} : {} \n{}\n{}'.format(
-                "ls -l", proc.returncode, stdout, stderr
-            ))
-    proc = Popen(
-            ["pwd"],
-            stdout=PIPE, stderr=PIPE
-        )
-    stdout, stderr = proc.communicate()
-    logging.error('{} : {} \n{}\n{}'.format(
-                "ls -l", proc.returncode, stdout, stderr
-            ))
-    logging.info("scripts before: {}".format(scripts))
+    # proc = Popen(
+    #         ["ls", "-l", "hooks"],
+    #         stdout=PIPE, stderr=PIPE
+    #     )
+    # stdout, stderr = proc.communicate()
+    # logging.error('{} : {} \n{}\n{}'.format(
+    #             "ls -l", proc.returncode, stdout, stderr
+    #         ))
+    # proc = Popen(
+    #         ["pwd"],
+    #         stdout=PIPE, stderr=PIPE
+    #     )
+    # stdout, stderr = proc.communicate()
+    # logging.error('{} : {} \n{}\n{}'.format(
+    #             "ls -l", proc.returncode, stdout, stderr
+    #         ))
+    logging.debug("scripts before: {}".format(scripts))
     # Check file
-    scripts = [s for s in scripts if isfile(s)]
-    logging.info("scripts after: {}".format(scripts))
+    scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
+    logging.debug("scripts after: {}".format(scripts))
     #Give permissions
-    for s in scripts: 
-        if not access(s, X_OK):
-            os.chmod(s, 777)
+    # for s in scripts: 
+    #     if not :
+    #         os.chmod(s, 777)
 
     if not scripts:
         return dumps({'status': 'nop'})

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+JSON_FILE="$1"
+EVENT_TYPE="$2"
+
+REF_TYPE=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f1)
+if [ "REF_TYPE" == "tags" ]; then
+    TAG_NAME=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f2)
+else
+    BRANCH_NAME=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f2)
+COMMIT_ID=$(jq -r ".head_commit" $JSON_FILE)
+REPO_URL=$(jq -r ".repository.html_url" $JSON_FILE)
+
+echo "${GCP_KEY}" > /tmp/key.json
+gcloud auth activate-service-account --key-file=/tmp/key.json
+echo "${REF_TYPE}, ${BRANCH_NAME}, ${TAG_NAME}, ${COMMIT_ID}, ${REPO_URL}"
+wget -o /tmp/${COMMIT_ID}.zip ${REPO_URL}/archive/${COMMIT_ID}.zip
+mkdir ${COMMIT_ID}
+unzip /tmp/${COMMIT_ID}.zip -d /tmp/${COMMIT_ID}
+tar cvzf ${COMMIT_ID}.tar.gz /tmp/${COMMIT_ID}
+gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://cloud-build-workspace
+gcloud config set builds/use_kaniko True
+if [ -z ${TAG_NAME} ]; then
+    gcloud build submit gs://cloud-build-workspace/${COMMIT_ID}.tar.gz --substitutions COMMIT_SHA=${COMMIT_SHA} REPO_NAME=${} BRANCH_NAME=${BRANCH} 
+else
+    gcloud build submit gs://cloud-build-workspace/${COMMIT_ID}.tar.gz -t ${TAG_NAME}--substitutions COMMIT_SHA=${COMMIT_SHA} REPO_NAME=${}  
+
