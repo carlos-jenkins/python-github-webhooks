@@ -158,6 +158,14 @@ def index():
         scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
+    proc = Popen(
+            ["ls", "-l"],
+            stdout=PIPE, stderr=PIPE
+        )
+    stdout, stderr = proc.communicate()
+    logging.error('{} : {} \n{}\n{}'.format(
+                "ls -l", proc.returncode, stdout, stderr
+            ))
     logging.info("scripts before: {}".format(scripts))
     # Check file
     scripts = [s for s in scripts if isfile(s)]
