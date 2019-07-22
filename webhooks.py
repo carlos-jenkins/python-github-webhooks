@@ -159,7 +159,15 @@ def index():
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
     proc = Popen(
-            ["ls", "-l"],
+            ["ls", "-l", "hooks"],
+            stdout=PIPE, stderr=PIPE
+        )
+    stdout, stderr = proc.communicate()
+    logging.error('{} : {} \n{}\n{}'.format(
+                "ls -l", proc.returncode, stdout, stderr
+            ))
+    proc = Popen(
+            ["pwd"],
             stdout=PIPE, stderr=PIPE
         )
     stdout, stderr = proc.communicate()
