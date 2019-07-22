@@ -14,7 +14,8 @@ RUN apk add --update \
  curl \
  which \
  bash \
- unzip
+ unzip \
+ jq
 
 RUN curl -sSL https://sdk.cloud.google.com | bash
 
