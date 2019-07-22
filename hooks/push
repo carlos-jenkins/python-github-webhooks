@@ -9,7 +9,7 @@ if [ "REF_TYPE" == "tags" ]; then
 else
     BRANCH_NAME=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f2)
 fi
-COMMIT_ID=$(jq -r ".head_commit" $JSON_FILE)
+COMMIT_ID=$(jq -r ".head_commit.id" $JSON_FILE)
 REPO_URL=$(jq -r ".repository.html_url" $JSON_FILE)
 
 echo "${GCP_KEY}" > /tmp/key.json
