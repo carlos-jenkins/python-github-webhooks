@@ -1,10 +1,19 @@
 FROM python:2.7-alpine
-MAINTAINER "Matjaž Finžgar" <matjaz@finzgar.net>
 
 WORKDIR /app
 
 COPY requirements.txt /app
 RUN pip install -r requirements.txt
+RUN apk add --update \
+ python \
+ curl \
+ which \
+ bash \
+ unzip
+
+RUN curl -sSL https://sdk.cloud.google.com | bash
+
+ENV PATH $PATH:/root/google-cloud-sdk/bin
 
 COPY . /app
 
