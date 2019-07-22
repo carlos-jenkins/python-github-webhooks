@@ -24,4 +24,4 @@ if [ -z ${TAG_NAME} ]; then
     gcloud build submit gs://cloud-build-workspace/${COMMIT_ID}.tar.gz --substitutions COMMIT_SHA=${COMMIT_SHA} REPO_NAME=${} BRANCH_NAME=${BRANCH} 
 else
     gcloud build submit gs://cloud-build-workspace/${COMMIT_ID}.tar.gz -t ${TAG_NAME}--substitutions COMMIT_SHA=${COMMIT_SHA} REPO_NAME=${}  
-
+fi
