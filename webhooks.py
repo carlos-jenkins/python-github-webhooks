@@ -159,8 +159,14 @@ def index():
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
 
-    # Check permissions
-    scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
+    # Check file
+    scripts = [s for s in scripts if isfile(s)]
+    
+    #Give permissions
+    for s in scripts: 
+        if not access(s, X_OK):
+            os.chmod(s, 777)
+
     if not scripts:
         return dumps({'status': 'nop'})
 
