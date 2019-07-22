@@ -16,8 +16,8 @@
 # under the License.
 
 import logging
-from sys import stderr, hexversion
-logging.basicConfig(stream=stderr)
+from sys import stdout, hexversion
+logging.basicConfig(level = 'INFO', stream=stdout)
 
 import hmac
 import os
