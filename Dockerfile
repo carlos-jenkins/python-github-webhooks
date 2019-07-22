@@ -15,9 +15,11 @@ RUN curl -sSL https://sdk.cloud.google.com | bash
 
 ENV PATH $PATH:/root/google-cloud-sdk/bin
 
-COPY . /app
+COPY config.json /app
+COPY webhooks.py /app
+COPY hooks /app/hooks
 
-RUN chmod +x hooks/*
+RUN chmod +x /app/hooks/*
 
 EXPOSE 5000
 CMD ["python", "webhooks.py"]
