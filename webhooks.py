@@ -20,6 +20,7 @@ from sys import stderr, hexversion
 logging.basicConfig(stream=stderr)
 
 import hmac
+import os
 from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
