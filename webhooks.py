@@ -49,8 +49,10 @@ def index():
         abort(501)
 
     # Load config
-    with open(join(path, 'config.json'), 'r') as cfg:
-        config = loads(cfg.read())
+    config = loads(os.getenv('CONFIG'))
+    if not config:
+        with open(join(path, 'config.json'), 'r') as cfg:
+            config = loads(cfg.read())
 
     hooks = config.get('hooks_path', join(path, 'hooks'))
 
@@ -209,8 +211,8 @@ def index():
 
         # Log errors if a hook failed
         if proc.returncode != 0:
-            logging.error('{} : {} \n{}'.format(
-                s, proc.returncode, stderr
+            logging.error('{} : {} \nSTDOUT: {}\nSTDERR: {}'.format(
+                s, proc.returncode, stdout, stderr
             ))
 
     # Remove temporal file

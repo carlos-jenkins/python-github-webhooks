@@ -2,10 +2,6 @@ FROM python:2.7-alpine
 
 WORKDIR /app
 
-COPY config.json /app
-COPY webhooks.py /app
-RUN mkdir /app/hooks
-COPY hooks/* /app/hooks
 COPY requirements.txt /app
 
 RUN pip install -r requirements.txt
@@ -20,6 +16,12 @@ RUN apk add --update \
 RUN curl -sSL https://sdk.cloud.google.com | bash
 
 ENV PATH $PATH:/root/google-cloud-sdk/bin
+
+COPY config.json /app
+COPY webhooks.py /app
+RUN mkdir /app/hooks
+COPY hooks/* /app/hooks
+COPY cloudbuild.yaml /app/
 
 RUN chmod +x /app/hooks/*
 

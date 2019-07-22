@@ -1,0 +1,9 @@
+steps:
+#- name: 'gcr.io/kaniko-project/executor:latest'
+#  args:
+#  - --destination=gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA
+#  - --cache=true
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', '.']
+
+images: ['gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA']
