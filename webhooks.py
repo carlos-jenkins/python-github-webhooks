@@ -17,7 +17,7 @@
 
 import logging
 from sys import stdout, hexversion
-logging.basicConfig(level = 'INFO', stream=stdout)
+
 
 import threading
 import hmac
@@ -32,9 +32,17 @@ from os.path import isfile, abspath, normpath, dirname, join, basename
 import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
+# from flask.logging import default_handler
 
+class ContextualFilter(logging.Filter):
+
+    def filter(self, log_record):
+        log_record.github_delivery = request.headers.get('X-GitHub-Delivery') if request else ''
+        return True
 
 application = Flask(__name__)
+#logging.basicConfig(level = os.getenv('LOG_LEVEL', logging.INFO))
+
 
 def runShell(script, tmpfile, event):
     proc = Popen(
@@ -45,7 +53,7 @@ def runShell(script, tmpfile, event):
 
     # Log errors if a hook failed
     if proc.returncode != 0:
-        logging.error('{} : {} \nSTDOUT: {}\nSTDERR: {}'.format(
+        application.logger.error('{} : {} \nSTDOUT: {}\nSTDERR: {}'.format(
             script, proc.returncode, stdout, stderr
         ))
 
@@ -73,7 +81,7 @@ def index():
     """
     Main WSGI application entry.
     """
-
+    
     path = normpath(abspath(dirname(__file__)))
 
     # Only POST is implemented
@@ -100,13 +108,14 @@ def index():
             if src_ip in ip_network(valid_ip):
                 break
         else:
-            logging.error('IP {} not allowed'.format(
+            application.logger.error('IP {} not allowed'.format(
                 src_ip
             ))
             abort(403)
 
     # Enforce secret
     secret = config.get('enforce_secret', '')
+    
     if secret:
         # Only SHA1 is supported
         header_signature = request.headers.get('X-Hub-Signature')
@@ -140,7 +149,7 @@ def index():
     try:
         payload = request.get_json()
     except Exception:
-        logging.warning('Request parsing failed')
+        application.logger.warning('Request parsing failed')
         abort(400)
 
     # Determining the branch is tricky, as it only appears for certain event
@@ -178,11 +187,11 @@ def index():
         'branch': branch,
         'event': event
     }
-    logging.info('Metadata: {}'.format(dumps(meta)))
+    application.logger.info('Metadata: {}'.format(dumps(meta)))
 
     # Skip push-delete
     if event == 'push' and payload['deleted']:
-        logging.info('Skipping push-delete event for {}'.format(dumps(meta)))
+        application.logger.info('Skipping push-delete event for {}'.format(dumps(meta)))
         return dumps({'status': 'skipped'})
 
     # Possible hooks
@@ -193,26 +202,11 @@ def index():
         scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, 'all'))
-    # proc = Popen(
-    #         ["ls", "-l", "hooks"],
-    #         stdout=PIPE, stderr=PIPE
-    #     )
-    # stdout, stderr = proc.communicate()
-    # logging.error('{} : {} \n{}\n{}'.format(
-    #             "ls -l", proc.returncode, stdout, stderr
-    #         ))
-    # proc = Popen(
-    #         ["pwd"],
-    #         stdout=PIPE, stderr=PIPE
-    #     )
-    # stdout, stderr = proc.communicate()
-    # logging.error('{} : {} \n{}\n{}'.format(
-    #             "ls -l", proc.returncode, stdout, stderr
-    #         ))
-    logging.debug("scripts before: {}".format(scripts))
+
+    application.logger.debug("scripts before: {}".format(scripts))
     # Check file
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
-    logging.debug("scripts after: {}".format(scripts))
+    application.logger.debug("scripts after: {}".format(scripts))
     #Give permissions
     # for s in scripts: 
     #     if not :
@@ -237,9 +231,19 @@ def index():
             return dumps({'status': 'done'})
 
     output = dumps(ran, sort_keys=True, indent=4)
-    logging.info(output)
+    application.logger.info(output)
     return output
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level = os.getenv('LOG_LEVEL', logging.INFO))
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(github_delivery)s %(message)s')
+    handler = logging.StreamHandler(stdout)
+    handler.setFormatter(formatter)
+    handler.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
+    filter = ContextualFilter()
+    handler.addFilter(filter)
+    application.logger.addHandler(handler)
+    logging.root.handlers = [handler]
     application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    
