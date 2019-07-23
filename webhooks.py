@@ -19,6 +19,7 @@ import logging
 from sys import stdout, hexversion
 logging.basicConfig(level = 'INFO', stream=stdout)
 
+import threading
 import hmac
 import os
 from hashlib import sha1
@@ -35,6 +36,37 @@ from flask import Flask, request, abort
 
 application = Flask(__name__)
 
+def runShell(script, tmpfile, event):
+    proc = Popen(
+        [script, tmpfile, event],
+        stdout=PIPE, stderr=PIPE
+    )
+    stdout, stderr = proc.communicate()
+
+    # Log errors if a hook failed
+    if proc.returncode != 0:
+        logging.error('{} : {} \nSTDOUT: {}\nSTDERR: {}'.format(
+            script, proc.returncode, stdout, stderr
+        ))
+
+    return {
+        'returncode': proc.returncode,
+        'stdout': stdout.decode('utf-8'),
+        'stderr': stderr.decode('utf-8'),
+    }
+
+def runFunction(scripts, tmpfile, event, async):
+    ran = {}
+    for s in scripts:
+        if async:
+            thread = threading.Thread(target = runShell, args = (s, tmpfile, event))
+            thread.start()
+        else:
+            ran[basename(s)] = runShell(s, tmpfile, event)
+    # Remove temporal file
+    if not async:
+        remove(tmpfile)
+    return ran
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
@@ -50,6 +82,7 @@ def index():
 
     # Load config
     config = loads(os.getenv('CONFIG'))
+    async = config.get('async', False)
     if not config:
         with open(join(path, 'config.json'), 'r') as cfg:
             config = loads(cfg.read())
@@ -145,7 +178,7 @@ def index():
         'branch': branch,
         'event': event
     }
-    logging.info('Metadata:\n{}'.format(dumps(meta)))
+    logging.info('Metadata: {}'.format(dumps(meta)))
 
     # Skip push-delete
     if event == 'push' and payload['deleted']:
@@ -194,33 +227,14 @@ def index():
         pf.write(dumps(payload))
 
     # Run scripts
-    ran = {}
-    for s in scripts:
-
-        proc = Popen(
-            [s, tmpfile, event],
-            stdout=PIPE, stderr=PIPE
-        )
-        stdout, stderr = proc.communicate()
-
-        ran[basename(s)] = {
-            'returncode': proc.returncode,
-            'stdout': stdout.decode('utf-8'),
-            'stderr': stderr.decode('utf-8'),
-        }
-
-        # Log errors if a hook failed
-        if proc.returncode != 0:
-            logging.error('{} : {} \nSTDOUT: {}\nSTDERR: {}'.format(
-                s, proc.returncode, stdout, stderr
-            ))
-
-    # Remove temporal file
-    remove(tmpfile)
+    ran = runFunction(scripts, tmpfile, event, async)
 
     info = config.get('return_scripts_info', False)
-    if not info:
-        return dumps({'status': 'done'})
+    if not info or async:
+        if async:
+            return dumps({'status': 'queued'})
+        else:
+            return dumps({'status': 'done'})
 
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)

@@ -17,7 +17,6 @@ RUN curl -sSL https://sdk.cloud.google.com | bash
 
 ENV PATH $PATH:/root/google-cloud-sdk/bin
 
-COPY config.json /app
 COPY webhooks.py /app
 RUN mkdir /app/hooks
 COPY hooks/* /app/hooks

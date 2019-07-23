@@ -36,3 +36,4 @@ else
     gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async -t ${TAG_NAME} 
     #--substitutions COMMIT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME}  
 fi
+rm -f $JSON_FILE
