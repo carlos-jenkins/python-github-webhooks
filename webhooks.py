@@ -145,7 +145,7 @@ def index():
         application.logger.info(loads(request.get_json()))
         payload = loads(base64.b64decode(loads(request.get_json())['message']['data']))
         event = loads(request.get_json())['message']['attributes']['event']
-    except Exception e:
+    except Exception as e:
         application.logger.warning('Request parsing failed', e)
         abort(400)
 
