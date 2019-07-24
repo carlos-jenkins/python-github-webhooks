@@ -19,7 +19,6 @@ import logging
 from sys import stdout, hexversion
 
 
-import threading
 import hmac
 import os
 from hashlib import sha1
@@ -63,17 +62,12 @@ def runShell(script, tmpfile, event):
         'stderr': stderr.decode('utf-8'),
     }
 
-def runFunction(scripts, tmpfile, event, async):
+def runFunction(scripts, tmpfile, event):
     ran = {}
     for s in scripts:
-        if async:
-            thread = threading.Thread(target = runShell, args = (s, tmpfile, event))
-            thread.start()
-        else:
-            ran[basename(s)] = runShell(s, tmpfile, event)
+        ran[basename(s)] = runShell(s, tmpfile, event)
     # Remove temporal file
-    if not async:
-        remove(tmpfile)
+    remove(tmpfile)
     return ran
 
 @application.route('/', methods=['GET', 'POST'])
@@ -88,57 +82,56 @@ def index():
     if request.method != 'POST':
         abort(501)
 
-    # Load config
+    # # Load config
     config = loads(os.getenv('CONFIG'))
-    async = config.get('async', False)
-    if not config:
-        with open(join(path, 'config.json'), 'r') as cfg:
-            config = loads(cfg.read())
+    # if not config:
+    #     with open(join(path, 'config.json'), 'r') as cfg:
+    #         config = loads(cfg.read())
 
     hooks = config.get('hooks_path', join(path, 'hooks'))
 
-    # Allow Github IPs only
-    if config.get('github_ips_only', True):
-        src_ip = ip_address(
-            u'{}'.format(request.access_route[0])  # Fix stupid ipaddress issue
-        )
-        whitelist = requests.get('https://api.github.com/meta').json()['hooks']
+    # # Allow Github IPs only
+    # if config.get('github_ips_only', True):
+    #     src_ip = ip_address(
+    #         u'{}'.format(request.access_route[0])  # Fix stupid ipaddress issue
+    #     )
+    #     whitelist = requests.get('https://api.github.com/meta').json()['hooks']
 
-        for valid_ip in whitelist:
-            if src_ip in ip_network(valid_ip):
-                break
-        else:
-            application.logger.error('IP {} not allowed'.format(
-                src_ip
-            ))
-            abort(403)
+    #     for valid_ip in whitelist:
+    #         if src_ip in ip_network(valid_ip):
+    #             break
+    #     else:
+    #         application.logger.error('IP {} not allowed'.format(
+    #             src_ip
+    #         ))
+    #         abort(403)
 
-    # Enforce secret
-    secret = config.get('enforce_secret', '')
+    # # Enforce secret
+    # secret = config.get('enforce_secret', '')
     
-    if secret:
-        # Only SHA1 is supported
-        header_signature = request.headers.get('X-Hub-Signature')
-        if header_signature is None:
-            abort(403)
+    # if secret:
+    #     # Only SHA1 is supported
+    #     header_signature = request.headers.get('X-Hub-Signature')
+    #     if header_signature is None:
+    #         abort(403)
 
-        sha_name, signature = header_signature.split('=')
-        if sha_name != 'sha1':
-            abort(501)
+    #     sha_name, signature = header_signature.split('=')
+    #     if sha_name != 'sha1':
+    #         abort(501)
 
-        # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
+    #     # HMAC requires the key to be bytes, but data is string
+    #     mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
 
-        # Python prior to 2.7.7 does not have hmac.compare_digest
-        if hexversion >= 0x020707F0:
-            if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
-                abort(403)
-        else:
-            # What compare_digest provides is protection against timing
-            # attacks; we can live without this protection for a web-based
-            # application
-            if not str(mac.hexdigest()) == str(signature):
-                abort(403)
+    #     # Python prior to 2.7.7 does not have hmac.compare_digest
+    #     if hexversion >= 0x020707F0:
+    #         if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
+    #             abort(403)
+    #     else:
+    #         # What compare_digest provides is protection against timing
+    #         # attacks; we can live without this protection for a web-based
+    #         # application
+    #         if not str(mac.hexdigest()) == str(signature):
+    #             abort(403)
 
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
@@ -147,7 +140,7 @@ def index():
 
     # Gather data
     try:
-        payload = request.get_json()
+        payload = loads(request.get_json().data)
     except Exception:
         application.logger.warning('Request parsing failed')
         abort(400)
@@ -221,14 +214,11 @@ def index():
         pf.write(dumps(payload))
 
     # Run scripts
-    ran = runFunction(scripts, tmpfile, event, async)
+    ran = runFunction(scripts, tmpfile, event)
 
     info = config.get('return_scripts_info', False)
-    if not info or async:
-        if async:
-            return dumps({'status': 'queued'})
-        else:
-            return dumps({'status': 'done'})
+    if not info:
+        return dumps({'status': 'done'})
 
     output = dumps(ran, sort_keys=True, indent=4)
     application.logger.info(output)

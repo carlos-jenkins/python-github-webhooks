@@ -27,7 +27,7 @@ cd /tmp/${COMMIT_ID}
 cp /app/cloudbuild.yaml .
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
-gcloud config set builds/use_kaniko True
+#gcloud config set builds/use_kaniko True
 gcloud config set project ${GCP_PROJECT_NAME}
 if [ -z ${TAG_NAME} ]; then
     gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}
@@ -36,4 +36,3 @@ else
     gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async -t ${TAG_NAME} 
     #--substitutions COMMIT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME}  
 fi
-rm -f $JSON_FILE
