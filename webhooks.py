@@ -146,7 +146,7 @@ def index():
         payload = loads(base64.b64decode(loads(request.get_json())['message']['data']))
         event = loads(request.get_json())['message']['attributes']['event']
     except Exception as e:
-        application.logger.warning('Request parsing failed', e)
+        application.logger.error(e, exc_info=True)
         abort(400)
 
     # Determining the branch is tricky, as it only appears for certain event
