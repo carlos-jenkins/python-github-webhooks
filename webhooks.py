@@ -228,7 +228,7 @@ def index():
 
 if __name__ == '__main__':
     logging.basicConfig(level = os.getenv('LOG_LEVEL', logging.INFO))
-    formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(github_delivery)s %(message)s')
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s')
     handler = logging.StreamHandler(stdout)
     handler.setFormatter(formatter)
     handler.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
