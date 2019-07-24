@@ -134,14 +134,15 @@ def index():
     #             abort(403)
 
     # Implement ping
-    event = request.headers.get('X-GitHub-Event', 'ping')
-    if event == 'ping':
-        return dumps({'msg': 'pong'})
+    # event = request.headers.get('X-GitHub-Event', 'ping')
+    # if event == 'ping':
+    #     return dumps({'msg': 'pong'})
 
     # Gather data
     try:
         application.logger.info(request.get_json())
-        payload = loads(request.get_json().data)
+        payload = loads(loads(request.get_json())['data'])
+        event = loads(request.get_json())['attributes']['event']
     except Exception:
         application.logger.warning('Request parsing failed')
         abort(400)
