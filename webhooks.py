@@ -32,17 +32,8 @@ from os.path import isfile, abspath, normpath, dirname, join, basename
 import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
-# from flask.logging import default_handler
-
-class ContextualFilter(logging.Filter):
-
-    def filter(self, log_record):
-        log_record.github_delivery = request.headers.get('X-GitHub-Delivery') if request else ''
-        return True
 
 application = Flask(__name__)
-#logging.basicConfig(level = os.getenv('LOG_LEVEL', logging.INFO))
-
 
 def runShell(script, tmpfile, event):
     proc = Popen(
@@ -76,7 +67,6 @@ def index():
     """
     Main WSGI application entry.
     """
-    application.logger.info("Llego")
     path = normpath(abspath(dirname(__file__)))
 
     # Only POST is implemented
@@ -85,59 +75,8 @@ def index():
 
     # # Load config
     config = loads(os.getenv('CONFIG'))
-    # if not config:
-    #     with open(join(path, 'config.json'), 'r') as cfg:
-    #         config = loads(cfg.read())
-
     hooks = config.get('hooks_path', join(path, 'hooks'))
 
-    # # Allow Github IPs only
-    # if config.get('github_ips_only', True):
-    #     src_ip = ip_address(
-    #         u'{}'.format(request.access_route[0])  # Fix stupid ipaddress issue
-    #     )
-    #     whitelist = requests.get('https://api.github.com/meta').json()['hooks']
-
-    #     for valid_ip in whitelist:
-    #         if src_ip in ip_network(valid_ip):
-    #             break
-    #     else:
-    #         application.logger.error('IP {} not allowed'.format(
-    #             src_ip
-    #         ))
-    #         abort(403)
-
-    # # Enforce secret
-    # secret = config.get('enforce_secret', '')
-    
-    # if secret:
-    #     # Only SHA1 is supported
-    #     header_signature = request.headers.get('X-Hub-Signature')
-    #     if header_signature is None:
-    #         abort(403)
-
-    #     sha_name, signature = header_signature.split('=')
-    #     if sha_name != 'sha1':
-    #         abort(501)
-
-    #     # HMAC requires the key to be bytes, but data is string
-    #     mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
-
-    #     # Python prior to 2.7.7 does not have hmac.compare_digest
-    #     if hexversion >= 0x020707F0:
-    #         if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
-    #             abort(403)
-    #     else:
-    #         # What compare_digest provides is protection against timing
-    #         # attacks; we can live without this protection for a web-based
-    #         # application
-    #         if not str(mac.hexdigest()) == str(signature):
-    #             abort(403)
-
-    # Implement ping
-    # event = request.headers.get('X-GitHub-Event', 'ping')
-    # if event == 'ping':
-    #     return dumps({'msg': 'pong'})
 
     # Gather data
     try:
@@ -233,8 +172,6 @@ if __name__ == '__main__':
     handler = logging.StreamHandler(stdout)
     handler.setFormatter(formatter)
     handler.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
-    #filter = ContextualFilter()
-    #handler.addFilter(filter)
     application.logger.addHandler(handler)
     logging.root.handlers = [handler]
     application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
