@@ -20,6 +20,7 @@ from sys import stdout, hexversion
 
 
 import hmac
+import base64
 import os
 from hashlib import sha1
 from json import loads, dumps
@@ -141,8 +142,8 @@ def index():
     # Gather data
     try:
         application.logger.info(request.get_json())
-        payload = loads(loads(request.get_json())['data'])
-        event = loads(request.get_json())['attributes']['event']
+        payload = loads(base64.b64decode(loads(request.get_json())['message']['data']))
+        event = loads(request.get_json())['message']['attributes']['event']
     except Exception:
         application.logger.warning('Request parsing failed')
         abort(400)
