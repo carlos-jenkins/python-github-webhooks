@@ -141,7 +141,6 @@ def index():
 
     # Gather data
     try:
-        application.logger.info(request.get_json())
         payload = loads(base64.b64decode(request.get_json()['message']['data']))
         event = request.get_json()['message']['attributes']['event']
     except Exception as e:
@@ -183,7 +182,7 @@ def index():
         'branch': branch,
         'event': event
     }
-    application.logger.info('Metadata: {}'.format(dumps(meta)))
+    application.logger.info('Event received: {}'.format(dumps(meta)))
 
     # Skip push-delete
     if event == 'push' and payload['deleted']:
