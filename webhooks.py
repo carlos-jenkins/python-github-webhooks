@@ -75,7 +75,7 @@ def index():
     """
     Main WSGI application entry.
     """
-    
+    application.logger.info("Llego")
     path = normpath(abspath(dirname(__file__)))
 
     # Only POST is implemented
@@ -232,8 +232,8 @@ if __name__ == '__main__':
     handler = logging.StreamHandler(stdout)
     handler.setFormatter(formatter)
     handler.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
-    filter = ContextualFilter()
-    handler.addFilter(filter)
+    #filter = ContextualFilter()
+    #handler.addFilter(filter)
     application.logger.addHandler(handler)
     logging.root.handlers = [handler]
     application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
