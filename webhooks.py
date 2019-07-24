@@ -142,7 +142,7 @@ def index():
     # Gather data
     try:
         application.logger.info(request.get_json())
-        application.logger.info(loads(request.get_json()))
+        application.logger.info(str(loads(request.get_json())))
         payload = loads(base64.b64decode(loads(request.get_json())['message']['data']))
         event = loads(request.get_json())['message']['attributes']['event']
     except Exception as e:
