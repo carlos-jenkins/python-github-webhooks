@@ -140,6 +140,7 @@ def index():
 
     # Gather data
     try:
+        application.logger.info(request.get_json())
         payload = loads(request.get_json().data)
     except Exception:
         application.logger.warning('Request parsing failed')
