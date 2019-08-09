@@ -21,7 +21,7 @@ case "$PR_ACTION" in
     #wget -O /tmp/${COMMIT_ID}.zip "${REPO_URL}/archive/${COMMIT_ID}.zip"
     mkdir /tmp/${REPO_NAME}_${PR_ID}_${DATE}
     unzip /tmp/${REPO_NAME}_${PR_ID}_${DATE}.zip -d /tmp/
-    mv /tmp/${REPO_NAME}*/* /tmp/${REPO_NAME}_${PR_ID}_${DATE}
+    mv /tmp/${ORG_NAME}-${REPO_NAME}*/* /tmp/${REPO_NAME}_${PR_ID}_${DATE}
     cd /tmp/${REPO_NAME}_${PR_ID}_${DATE}
     cp /app/cloudbuild.yaml .
     tar cvzf /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz *
