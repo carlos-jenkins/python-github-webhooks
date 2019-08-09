@@ -5,7 +5,7 @@ EVENT_TYPE="$2"
 
 PR_ACTION=$(jq -r ".action" $JSON_FILE)
 PR_ID=$(jq -r ".number" $JSON_FILE)
-COMMIT_ID=$(jq -r ".pull_request.head.sha")
+COMMIT_ID=$(jq -r ".pull_request.head.sha" $JSON_FILE)
 REPO_URL=$(jq -r ".repository.html_url" $JSON_FILE)
 REPO_NAME=$(jq -r ".repository.name" $JSON_FILE)
 COMMIT_SHA=$(echo ${COMMIT_ID} | cut -c1-7)
