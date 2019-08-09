@@ -14,7 +14,7 @@ ORG_NAME=$(echo $REPO_URL | cut -d"/" -f4)
 case "$PR_ACTION" in
   opened|edited)
     echo "${GCP_KEY}" > /tmp/key.json
-    echo "Building for ${PR_ACTION}, ${PR_ID}, ${REPO_URL}"
+    echo "Building for ${PR_ACTION}, ${PR_ID}, ${REPO_URL}, ${COMMIT_ID}"
     gcloud auth activate-service-account --key-file=/tmp/key.json
     DATE=$(date +%s)
     curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" "https://api.github.com/repos/${ORG_NAME}/${REPO_NAME}/zipball/pull/${PR_ID}/head" --output /tmp/${REPO_NAME}_${PR_ID}_${DATE}.zip
