@@ -16,7 +16,7 @@ COMMIT_SHA=$(echo ${COMMIT_ID} | cut -c1-7)
 ORG_NAME=$(echo $REPO_URL | cut -d"/" -f4)
 
 echo "${GCP_KEY}" > /tmp/key.json
-echo "${REF_TYPE}, ${BRANCH_NAME}, ${TAG_NAME}, ${COMMIT_ID}, ${REPO_URL}, ${REPO_URL}/archive/${COMMIT_ID}.zip"
+echo "Building for ${REF_TYPE}, ${BRANCH_NAME}, ${TAG_NAME}, ${COMMIT_ID}, ${REPO_URL}, ${REPO_URL}/archive/${COMMIT_ID}.zip"
 gcloud auth activate-service-account --key-file=/tmp/key.json
 curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" ${REPO_URL}/archive/${COMMIT_ID}.zip --output /tmp/${COMMIT_ID}.zip
 #wget -O /tmp/${COMMIT_ID}.zip "${REPO_URL}/archive/${COMMIT_ID}.zip"

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+JSON_FILE="$1"
+EVENT_TYPE="$2"
+
+PR_ACTION=$(jq -r ".action" $JSON_FILE)
+PR_ID=$(jq -r ".number" $JSON_FILE)
+COMMIT_ID=$(jq -r ".pull_request.head.sha")
+REPO_URL=$(jq -r ".pull_request.repository.html_url" $JSON_FILE)
+REPO_NAME=$(jq -r ".pull_request.repository.name" $JSON_FILE)
+COMMIT_SHA=$(echo ${COMMIT_ID} | cut -c1-7)
+ORG_NAME=$(echo $REPO_URL | cut -d"/" -f4)
+
+case "$PR_ACTION" in
+  opened|edited)
+    echo "${GCP_KEY}" > /tmp/key.json
+    echo "Building for ${PR_ACTION}, ${PR_ID}, ${REPO_URL}"
+    gcloud auth activate-service-account --key-file=/tmp/key.json
+    DATE=$(date +%s)
+    curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" "https://api.github.com/repos/${ORG_NAME}/${REPO_NAME}/zipball/pull/${PR_ID}/head" --output /tmp/${REPO_NAME}_${PR_ID}_${DATE}.zip
+    #wget -O /tmp/${COMMIT_ID}.zip "${REPO_URL}/archive/${COMMIT_ID}.zip"
+    mkdir /tmp/${REPO_NAME}_${PR_ID}_${DATE}
+    unzip /tmp/${REPO_NAME}_${PR_ID}_${DATE}.zip -d /tmp/
+    mv /tmp/${REPO_NAME}*/* /tmp/${REPO_NAME}_${PR_ID}_${DATE}
+    cd /tmp/${REPO_NAME}_${PR_ID}_${DATE}
+    cp /app/cloudbuild.yaml .
+    tar cvzf /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz *
+    gsutil cp /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz gs://${GS_BUCKET_NAME}
+    #gcloud config set builds/use_kaniko True
+    gcloud config set project ${GCP_PROJECT_NAME}
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID}
+  ;;
+  *)
+    echo "Skipping event type $PR_EVENT"
+  ;;
+esac
