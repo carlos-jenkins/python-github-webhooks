@@ -62,10 +62,17 @@ following order:
 
 ::
 
+    hooks/{event}-{name}-{branch}-background
     hooks/{event}-{name}-{branch}
+    hooks/{event}-{name}-background
     hooks/{event}-{name}
+    hooks/{event}-background
     hooks/{event}
+    hooks/all-background
     hooks/all
+
+Hook files with the "-background" suffix will be spawned asyncronously, and
+STDOUT/STDERR and return code will not be captured.
 
 The application will pass to the hooks the path to a JSON file holding the
 payload for the request as first argument. The event type will be passed
@@ -100,6 +107,11 @@ executable and has a shebang. A simple example in Python could be:
 Not all events have an associated branch, so a branch-specific hook cannot
 fire for such events. For events that contain a pull_request object, the
 base branch (target for the pull request) is used, not the head branch.
+
+Backgrounded hooks are responsible for cleaning up their own temp files, as 
+provided in argv[1].  The duplicate webhook content is required to preent a
+race condition where the content file is deleted before the child process
+can read it.
 
 The payload structure depends on the event type. Please review:
 
