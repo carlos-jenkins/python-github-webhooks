@@ -32,10 +32,7 @@ from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
 
 application = Flask(__name__)
-
-###pjh
-#application.url_map.strict_slashes = False
-###pjh
+application.url_map.strict_slashes = False
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
