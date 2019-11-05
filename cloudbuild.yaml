@@ -4,4 +4,4 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA']
 
-images: ['gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA']
+images: ['gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:latest']
