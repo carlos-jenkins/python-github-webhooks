@@ -24,7 +24,7 @@ mkdir /tmp/${COMMIT_ID}
 unzip /tmp/${COMMIT_ID}.zip -d /tmp/
 mv /tmp/${REPO_NAME}*/* /tmp/${COMMIT_ID}
 cd /tmp/${COMMIT_ID}
-cp /app/cloudbuild.yaml .
+cp -n /app/cloudbuild.yaml .
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
 #gcloud config set builds/use_kaniko True
