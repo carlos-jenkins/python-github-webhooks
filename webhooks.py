@@ -107,6 +107,10 @@ def index():
             # Push events provide a full Git ref in 'ref' and not a 'ref_type'.
             branch = payload['ref'].split('/', 2)[2]
 
+        elif event in ['release']:
+            # Release events provide branch name in 'target_commitish'.
+            branch = payload['release']['target_commitish']
+
     except KeyError:
         # If the payload structure isn't what we expect, we'll live without
         # the branch name
@@ -126,6 +130,10 @@ def index():
     # Skip push-delete
     if event == 'push' and payload['deleted']:
         application.logger.info('Skipping push-delete event for {}'.format(dumps(meta)))
+        return dumps({'status': 'skipped'})
+    # Skip release different from published
+    elif event == 'release' and payload['action'] != 'published':
+        application.logger.info('Skipping release-notpublished event for {}'.format(dumps(meta)))
         return dumps({'status': 'skipped'})
 
     # Possible hooks
