@@ -127,15 +127,6 @@ def index():
     }
     application.logger.info('Event received: {}'.format(dumps(meta)))
 
-    # Skip push-delete
-    if event == 'push' and payload['deleted']:
-        application.logger.info('Skipping push-delete event for {}'.format(dumps(meta)))
-        return dumps({'status': 'skipped'})
-    # Skip release different from published
-    elif event == 'release' and payload['action'] != 'published':
-        application.logger.info('Skipping release-notpublished event for {}'.format(dumps(meta)))
-        return dumps({'status': 'skipped'})
-
     # Possible hooks
     scripts = []
     if branch and name:
