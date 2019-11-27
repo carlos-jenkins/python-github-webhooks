@@ -20,7 +20,9 @@ case "$R_ACTION" in
     unzip /tmp/${TAG_NAME}.zip -d /tmp/
     mv /tmp/${ORG_NAME}-${REPO_NAME}*/* /tmp/${TAG_NAME}
     cd /tmp/${TAG_NAME}
-    cp -n /app/cloudbuild.yaml .
+    if ! [ -f  cloudbuild.yaml ]; then
+      cp /app/cloudbuild.yaml
+    fi
     tar cvzf /tmp/${TAG_NAME}.tar.gz *
     gsutil cp /tmp/${TAG_NAME}.tar.gz gs://${GS_BUCKET_NAME}
     #gcloud config set builds/use_kaniko True

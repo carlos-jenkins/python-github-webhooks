@@ -23,7 +23,9 @@ case "$PR_ACTION" in
     unzip /tmp/${REPO_NAME}_${PR_ID}_${DATE}.zip -d /tmp/
     mv /tmp/${ORG_NAME}-${REPO_NAME}*/* /tmp/${REPO_NAME}_${PR_ID}_${DATE}
     cd /tmp/${REPO_NAME}_${PR_ID}_${DATE}
-    cp /app/cloudbuild.yaml .
+    if ! [ -f  cloudbuild.yaml ]; then
+      cp /app/cloudbuild.yaml
+    fi
     tar cvzf /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz *
     gsutil cp /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz gs://${GS_BUCKET_NAME}
     #gcloud config set builds/use_kaniko True
