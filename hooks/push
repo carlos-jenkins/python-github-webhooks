@@ -25,7 +25,7 @@ unzip /tmp/${COMMIT_ID}.zip -d /tmp/
 mv /tmp/${REPO_NAME}*/* /tmp/${COMMIT_ID}
 cd /tmp/${COMMIT_ID}
 if ! [ -f  cloudbuild.yaml ]; then
-    cp /app/cloudbuild.yaml
+    cp /app/cloudbuild.yaml .
 fi
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
