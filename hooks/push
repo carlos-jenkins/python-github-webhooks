@@ -24,16 +24,19 @@ mkdir /tmp/${COMMIT_ID}
 unzip /tmp/${COMMIT_ID}.zip -d /tmp/
 #mv /tmp/${REPO_NAME}*/* /tmp/${COMMIT_ID}
 cd /tmp/${REPO_NAME}-${COMMIT_ID}
-if ! [ -f  cloudbuild.yaml ]; then
-    cp /app/cloudbuild.yaml .
-fi
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
 #gcloud config set builds/use_kaniko True
 gcloud config set project ${GCP_PROJECT_NAME}
 if [ -z ${TAG_NAME} ]; then
+    if ! [ -f cloudbuild.yaml ]; then
+        cp /app/cloudbuild.yaml .
+    fi
     gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID}
 else
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async -t gcr.io/$GCP_PROJECT_NAME/github.com/$ORG_NAME/$REPO_NAME:${TAG_NAME} --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID}
+    if ! [ -f cloudbuild.yaml ]; then
+        cp /app/cloudbuild_tag.yaml .
+    fi
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild_tag.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=$TAG_NAME
     #--substitutions COMMIT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME}  
 fi
