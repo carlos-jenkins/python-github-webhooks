@@ -4,7 +4,7 @@ JSON_FILE="$1"
 EVENT_TYPE="$2"
 
 REF_TYPE=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f2)
-if [ "REF_TYPE" == "tags" ]; then
+if [ "${REF_TYPE}" == "tags" ]; then
     TAG_NAME=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f3)
 else
     BRANCH_NAME=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f3)
