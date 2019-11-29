@@ -21,6 +21,7 @@ COPY webhooks.py /app
 RUN mkdir /app/hooks
 COPY hooks/* /app/hooks/
 COPY cloudbuild.yaml /app/
+COPY cloudbuild_tag.yaml /app/
 
 RUN chmod +x /app/hooks/*
 
