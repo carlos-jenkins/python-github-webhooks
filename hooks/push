@@ -20,8 +20,8 @@ echo "Building for ${REF_TYPE}, ${BRANCH_NAME}, ${TAG_NAME}, ${COMMIT_ID}, ${REP
 gcloud auth activate-service-account --key-file=/tmp/key.json
 curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" ${REPO_URL}/archive/${COMMIT_ID}.zip --output /tmp/${COMMIT_ID}.zip
 #wget -O /tmp/${COMMIT_ID}.zip "${REPO_URL}/archive/${COMMIT_ID}.zip"
-mkdir /tmp/${COMMIT_ID}
-unzip /tmp/${COMMIT_ID}.zip -d /tmp/
+#mkdir /tmp/${COMMIT_ID}
+unzip -o /tmp/${COMMIT_ID}.zip -d /tmp/
 #mv /tmp/${REPO_NAME}*/* /tmp/${COMMIT_ID}
 cd /tmp/${REPO_NAME}-${COMMIT_ID}
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
