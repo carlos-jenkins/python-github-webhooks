@@ -1,11 +1,11 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', '.']
+  args: ['build', '-t', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', '.']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA']
+  args: ['tag', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:latest']
+  args: ['tag', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:latest']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$TAG_NAME']
+  args: ['tag', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$TAG_NAME']
 
-images: ['gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:latest', 'gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$TAG_NAME']
+images: ['eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:latest', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$TAG_NAME']
