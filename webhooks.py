@@ -94,7 +94,7 @@ def index():
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(str(secret), msg=request.data, digestmod='sha1')
+        mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
 
         if not constant_time_compare(str(mac.hexdigest()), str(signature)):
             abort(403)
