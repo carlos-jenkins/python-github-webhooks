@@ -31,6 +31,18 @@ import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
 
+# Python prior to 2.7.7 does not have hmac.compare_digest
+if hexversion >= 0x020707F0:
+    def constant_time_compare(val1, val2):
+        return hmac.compare_digest(val1, val2)
+else:
+    def constant_time_compare(val1, val2):
+        if len(val1) != len(val2):
+            return False
+        result = 0
+        for x, y in zip(val1, val2):
+            result |= ord(x) ^ ord(y)
+        return result == 0
 
 application = Flask(__name__)
 
@@ -84,16 +96,8 @@ def index():
         # HMAC requires the key to be bytes, but data is string
         mac = hmac.new(str(secret), msg=request.data, digestmod='sha1')
 
-        # Python prior to 2.7.7 does not have hmac.compare_digest
-        if hexversion >= 0x020707F0:
-            if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
-                abort(403)
-        else:
-            # What compare_digest provides is protection against timing
-            # attacks; we can live without this protection for a web-based
-            # application
-            if not str(mac.hexdigest()) == str(signature):
-                abort(403)
+        if not constant_time_compare(str(mac.hexdigest()), str(signature)):
+            abort(403)
 
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
