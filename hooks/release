@@ -18,13 +18,13 @@ case "$R_ACTION" in
     curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" "${ZIPBALL_URL}" --output /tmp/${TAG_NAME}.zip
     mkdir /tmp/${TAG_NAME}
     unzip /tmp/${TAG_NAME}.zip -d /tmp/
+    # Including hidden files in *
+    shopt -s dotglob
     mv /tmp/${ORG_NAME}-${REPO_NAME}*/* /tmp/${TAG_NAME}
     cd /tmp/${TAG_NAME}
     if ! [ -f  cloudbuild.yaml ]; then
       cp /app/cloudbuild.yaml .
     fi
-    # Including hidden files in *
-    shopt -s dotglob
     tar cvzf /tmp/${TAG_NAME}.tar.gz *
     # Excluding hidden files in *
     shopt -u dotglob
