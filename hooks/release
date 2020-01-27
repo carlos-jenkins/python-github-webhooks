@@ -23,7 +23,11 @@ case "$R_ACTION" in
     if ! [ -f  cloudbuild.yaml ]; then
       cp /app/cloudbuild.yaml .
     fi
+    # Including hidden files in *
+    shopt -s dotglob
     tar cvzf /tmp/${TAG_NAME}.tar.gz *
+    # Excluding hidden files in *
+    shopt -u dotglob
     gsutil cp /tmp/${TAG_NAME}.tar.gz gs://${GS_BUCKET_NAME}
     #gcloud config set builds/use_kaniko True
     gcloud config set project ${GCP_PROJECT_NAME}
