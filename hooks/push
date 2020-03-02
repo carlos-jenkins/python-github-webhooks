@@ -2,6 +2,7 @@
 
 JSON_FILE="$1"
 EVENT_TYPE="$2"
+VERSION="$3"
 
 REF_TYPE=$(jq -r ".ref" $JSON_FILE | cut -d"/" -f2)
 if [ "${REF_TYPE}" == "tags" ]; then
@@ -33,11 +34,11 @@ if [ -z ${TAG_NAME} ]; then
     if ! [ -f cloudbuild.yaml ]; then
         cp /app/cloudbuild.yaml .
     fi
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID}
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${VERSION}
 else
     if ! [ -f cloudbuild.yaml ]; then
         cp /app/cloudbuild_tag.yaml .
     fi
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild_tag.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=$TAG_NAME
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=$TAG_NAME
     #--substitutions COMMIT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME}  
 fi
