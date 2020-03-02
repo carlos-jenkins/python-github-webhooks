@@ -24,9 +24,13 @@ curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" ${REPO_URL}/archive/${COMMIT_
 #wget -O /tmp/${COMMIT_ID}.zip "${REPO_URL}/archive/${COMMIT_ID}.zip"
 #mkdir /tmp/${COMMIT_ID}
 unzip -o /tmp/${COMMIT_ID}.zip -d /tmp/
+# Including hidden files in *
+shopt -s dotglob
 #mv /tmp/${REPO_NAME}*/* /tmp/${COMMIT_ID}
 cd /tmp/${REPO_NAME}-${COMMIT_ID}
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
+# Excluding hidden files in *
+shopt -u dotglob
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
 #gcloud config set builds/use_kaniko True
 gcloud config set project ${GCP_PROJECT_NAME}
