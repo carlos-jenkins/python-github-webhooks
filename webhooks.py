@@ -18,8 +18,10 @@
 import logging
 from sys import stdout, hexversion
 
-
+import semantic_version
+import dxf
 import hmac
+import yaml
 import base64
 import os
 from hashlib import sha1
@@ -28,6 +30,8 @@ from subprocess import Popen, PIPE
 from tempfile import mkstemp
 from os import access, X_OK, remove, fdopen
 from os.path import isfile, abspath, normpath, dirname, join, basename
+import sys
+import json
 
 import requests
 from ipaddress import ip_address, ip_network
@@ -35,9 +39,9 @@ from flask import Flask, request, abort
 
 application = Flask(__name__)
 
-def runShell(script, tmpfile, event):
+def runShell(script, tmpfile, event, version):
     proc = Popen(
-        [script, tmpfile, event],
+        [script, tmpfile, event, version],
         stdout=PIPE, stderr=PIPE
     )
     stdout, stderr = proc.communicate()
@@ -54,13 +58,90 @@ def runShell(script, tmpfile, event):
         'stderr': stderr.decode('utf-8'),
     }
 
-def runFunction(scripts, tmpfile, event):
+def runFunction(scripts, tmpfile, event, version):
     ran = {}
     for s in scripts:
-        ran[basename(s)] = runShell(s, tmpfile, event)
+        ran[basename(s)] = runShell(s, tmpfile, event, version)
     # Remove temporal file
     remove(tmpfile)
     return ran
+
+def getVersion(payload, branch, is_tag, event, commit_id):
+    if is_tag and event == "release":
+        return payload['release']['tag_name'].replace('v', '')
+    elif is_tag and event == "push":
+        return branch.replace('v', '')
+    elif branch == "develop" or branch == "master":
+        # Navigate through the registry and find the latest image
+        organization = payload['organization']['login']
+        repo_name = payload['repository']['name']
+        project_id = getProjectId()
+        version = None
+        for repo in getTagList(project_id, organization, repo_name, commit_id):
+            #if semantic_version.validate(repo.replace('v', '')):
+            try:
+                tmpVersion = semantic_version.Version(repo.replace('v', '').replace("-RC", ""))
+                if version is None:
+                    version = tmpVersion
+                elif version > tmpVersion:
+                    version = tmpVersion
+            except ValueError:
+                application.logger.info("Not a version: " +  repo)
+            #else:
+                #application.logger.info("Tag " + repo.replace('v', ''))
+        if version is None:
+            if (branch == "develop"):
+                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT"
+            else:
+                return os.getenv("START_VERSION", "1.0.0") + "-RC"
+        else:
+            if (branch == "develop"):
+                return str(version.next_minor()) + "-SNAPSHOT"
+            else:
+                return str(version.next_minor()) + "-RC"
+    else:
+        return commit_id[0:7]
+
+def getTagList(project_id, organization, repo_name, commit_id):
+    registry_url="https://" + os.getenv("DOCKER_REGISTRY", "eu.gcr.io") + "/v2/" + project_id + "/github.com/" + organization + "/" + repo_name +"/tags/list"
+    if commit_id is not None:
+        # See if the repo has a cloudbuild.yaml to get image names from there, if not, get the image name from a composition of vars
+        content = requests.get(url="https://api.github.com/repos/" + organization + "/" + repo_name + "/contents/cloudbuild.yaml?ref="+commit_id, auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
+        if content.status_code == 200:
+            substitutions = {"$PROJECT_ID":project_id, "$_ORG_NAME":organization, "eu.gcr.io":"eu.gcr.io/v2"}
+            # Get only one image as the rest are going to have the same tags (monorepo)
+            #application.logger.info(yaml.load(base64.b64decode(content.json()["content"])))
+            image = yaml.load(base64.b64decode(content.json()["content"]), Loader=yaml.FullLoader)["images"][0]
+            # Now replace substitution vars
+            for sub in substitutions.keys():
+                image = image.replace(sub, substitutions.get(sub))
+            registry_url= "https://" + image.split(":")[0] + "/tags/list"
+    try:
+        application.logger.info("Registry url: " + registry_url)
+        if os.getenv("GCR_TOKEN"):
+            r = requests.get(url = registry_url, headers = {"Authorization": "Bearer " + os.getenv("GCR_TOKEN")})
+        else:
+            r = requests.get(url = registry_url)
+        if r.status_code == 200:
+            return r.json()["tags"]
+        else:
+            application.logger.info("Error loading tag list")
+            return []
+    except Exception as e:
+        application.logger.error(e, exc_info=True)
+        return []
+        
+def getProjectId():
+    try:
+        r = requests.get(url = "http://metadata.google.internal/computeMetadata/v1/project/project-id", headers = {"Metadata-Flavor": "Google"})
+        if r.status_code == 200:
+            return r.text
+        else:
+            # Get env var
+            return os.getenv('PROJECT_ID')
+    except Exception:
+        return os.getenv('PROJECT_ID')
+      
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
@@ -89,6 +170,8 @@ def index():
     # Determining the branch is tricky, as it only appears for certain event
     # types an at different levels
     branch = None
+    is_tag = False
+    commit_id = None
     try:
         # Case 1: a ref_type indicates the type of ref.
         # This true for create and delete events.
@@ -102,14 +185,20 @@ def index():
             # This is the TARGET branch for the pull-request, not the source
             # branch
             branch = payload['pull_request']['base']['ref']
+            commit_id = payload["pull_request"]["head"]["sha"]
 
         elif event in ['push']:
             # Push events provide a full Git ref in 'ref' and not a 'ref_type'.
             branch = payload['ref'].split('/', 2)[2]
+            commit_id = payload["head_commit"]["id"]
+            if payload['ref'].split('/', 2)[1] == "tags":
+                is_tag = True
 
         elif event in ['release']:
             # Release events provide branch name in 'target_commitish'.
             branch = payload['release']['target_commitish']
+            if payload['release']['tag_name'] is not None:
+                is_tag = True
 
     except KeyError:
         # If the payload structure isn't what we expect, we'll live without
@@ -153,8 +242,10 @@ def index():
     with fdopen(osfd, 'w') as pf:
         pf.write(dumps(payload))
 
+    # Calculate version
+    version = getVersion(payload, branch, is_tag, event, commit_id)
     # Run scripts
-    ran = runFunction(scripts, tmpfile, event)
+    ran = runFunction(scripts, tmpfile, event, version)
 
     info = config.get('return_scripts_info', False)
     if not info:
@@ -173,5 +264,8 @@ if __name__ == '__main__':
     handler.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
     application.logger.addHandler(handler)
     logging.root.handlers = [handler]
-    application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    with open(sys.argv[1]) as json_file:
+        data = json.load(json_file)
+        print getVersion(data, sys.argv[2], False, sys.argv[3], data["commits"][0]["id"])
+    #application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
     

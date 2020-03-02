@@ -2,6 +2,7 @@
 
 JSON_FILE="$1"
 EVENT_TYPE="$2"
+VERSION="$3"
 
 R_ACTION=$(jq -r ".action" $JSON_FILE)
 ZIPBALL_URL=$(jq -r ".release.zipball_url" $JSON_FILE)

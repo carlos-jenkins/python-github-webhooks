@@ -2,6 +2,7 @@
 
 JSON_FILE="$1"
 EVENT_TYPE="$2"
+VERSION="$3"
 
 PR_ACTION=$(jq -r ".action" $JSON_FILE)
 PR_ID=$(jq -r ".number" $JSON_FILE)
@@ -34,7 +35,7 @@ case "$PR_ACTION" in
     gsutil cp /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz gs://${GS_BUCKET_NAME}
     #gcloud config set builds/use_kaniko True
     gcloud config set project ${GCP_PROJECT_NAME}
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID}
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${VERSION}
   ;;
   *)
     echo "Skipping pull request event type $PR_ACTION"
