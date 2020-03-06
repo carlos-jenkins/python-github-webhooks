@@ -19,9 +19,9 @@ ENV PATH $PATH:/root/google-cloud-sdk/bin
 
 COPY webhooks.py /app
 RUN mkdir /app/hooks
+
 COPY hooks/* /app/hooks/
-COPY cloudbuild.yaml /app/
-COPY cloudbuild_tag.yaml /app/
+COPY cloudbuild_files /app/cloudbuild_files
 
 RUN chmod +x /app/hooks/*
 

@@ -26,8 +26,15 @@ case "$PR_ACTION" in
     shopt -s dotglob
     mv /tmp/${ORG_NAME}-${REPO_NAME}*/* /tmp/${REPO_NAME}_${PR_ID}_${DATE}
     cd /tmp/${REPO_NAME}_${PR_ID}_${DATE}
-    if ! [ -f  cloudbuild.yaml ]; then
-      cp /app/cloudbuild.yaml .
+    if [ -s  cloudbuild.yaml ]; then
+      echo "Found cloudbuild.yaml in source repository"
+    elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
+      # Repo is for IAC, we copy the cloudbuild file for terraform
+      echo "Found IAC terraform project"
+      cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
+    else
+      echo "Copying generic file"
+      cp -af /app/cloudbuild_files/cloudbuild.yaml .
     fi
     tar cvzf /tmp/${REPO_NAME}_${PR_ID}_${DATE}.tar.gz *
     # Excluding hidden files in *
