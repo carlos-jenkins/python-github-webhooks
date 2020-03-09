@@ -264,8 +264,8 @@ if __name__ == '__main__':
     handler.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
     application.logger.addHandler(handler)
     logging.root.handlers = [handler]
-    with open(sys.argv[1]) as json_file:
-        data = json.load(json_file)
-        print getVersion(data, sys.argv[2], False, sys.argv[3], data["commits"][0]["id"])
-    #application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    #with open(sys.argv[1]) as json_file:
+    #    data = json.load(json_file)
+    #    print getVersion(data, sys.argv[2], False, sys.argv[3], data["commits"][0]["id"])
+    application.run(debug=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
     
