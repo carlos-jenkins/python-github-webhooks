@@ -19,7 +19,6 @@ import logging
 from sys import stdout, hexversion
 
 import semantic_version
-import dxf
 import hmac
 import yaml
 import base64
