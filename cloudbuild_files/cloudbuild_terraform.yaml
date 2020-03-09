@@ -16,7 +16,7 @@ steps:
       - --ciphertext-file=cloud-build-key.enc
       - --plaintext-file=id_rsa
       - --location=europe
-      - --keyring=cloud_build
+      - --keyring=cloud-build
       - --key=github-ssh-key
       - --project=support-prev-eslm
 
@@ -49,7 +49,7 @@ steps:
       - 'push'
       - 'eu.gcr.io/$PROJECT_ID/github.com/${_ORG_NAME}/$REPO_NAME:${TAG_NAME}'
 
-  - id: Push docker image into registry with tag latest
+  - id: Push docker image into registry with latest tag
     name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
