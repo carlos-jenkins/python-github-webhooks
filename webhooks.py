@@ -90,14 +90,14 @@ def getVersion(payload, branch, is_tag, event, commit_id):
                 #application.logger.info("Tag " + repo.replace('v', ''))
         if version is None:
             if (branch == "develop"):
-                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT"
+                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT-" + commit_id[0:7]
             else:
-                return os.getenv("START_VERSION", "1.0.0") + "-RC"
+                return os.getenv("START_VERSION", "1.0.0") + "-RC-" + commit_id[0:7]
         else:
             if (branch == "develop"):
-                return str(version.next_minor()) + "-SNAPSHOT"
+                return str(version.next_minor()) + "-SNAPSHOT-" + commit_id[0:7]
             else:
-                return str(version.next_minor()) + "-RC"
+                return str(version.next_minor()) + "-RC-" + commit_id[0:7]
     else:
         return commit_id[0:7]
 
