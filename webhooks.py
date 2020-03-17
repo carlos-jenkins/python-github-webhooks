@@ -31,6 +31,7 @@ from os import access, X_OK, remove, fdopen
 from os.path import isfile, abspath, normpath, dirname, join, basename
 import sys
 import json
+import re
 
 import requests
 from ipaddress import ip_address, ip_network
@@ -77,27 +78,27 @@ def getVersion(payload, branch, is_tag, event, commit_id):
         project_id = getProjectId()
         version = None
         for repo in getTagList(project_id, organization, repo_name, commit_id):
-            #if semantic_version.validate(repo.replace('v', '')):
+            application.logger.info("Processing version: " +  repo)
             try:
-                tmpVersion = semantic_version.Version(repo.replace('v', '').replace("-RC", ""))
-                if version is None:
-                    version = tmpVersion
-                elif version > tmpVersion:
-                    version = tmpVersion
+                extracted_version = re.match(r'v*(\d\.\d\.\d)', repo)
+                if extracted_version is not None:
+                    tmpVersion = semantic_version.Version(extracted_version.groups()[0])
+                    if version is None:
+                        version = tmpVersion
+                    elif tmpVersion > version:
+                        version = tmpVersion
             except ValueError:
-                application.logger.info("Not a version: " +  repo)
-            #else:
-                #application.logger.info("Tag " + repo.replace('v', ''))
+                application.logger.info("- Not a version!: " +  repo)
         if version is None:
             if (branch == "develop"):
-                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT-" + commit_id[0:7]
+                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT." + commit_id[0:7]
             else:
-                return os.getenv("START_VERSION", "1.0.0") + "-RC-" + commit_id[0:7]
+                return os.getenv("START_VERSION", "1.0.0") + "-RC." + commit_id[0:7]
         else:
             if (branch == "develop"):
-                return str(version.next_minor()) + "-SNAPSHOT-" + commit_id[0:7]
+                return str(version.next_minor()) + "-SNAPSHOT." + commit_id[0:7]
             else:
-                return str(version.next_minor()) + "-RC-" + commit_id[0:7]
+                return str(version.next_minor()) + "-RC." + commit_id[0:7]
     else:
         return commit_id[0:7]
 
