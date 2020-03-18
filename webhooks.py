@@ -80,13 +80,15 @@ def getVersion(payload, branch, is_tag, event, commit_id):
         for repo in getTagList(project_id, organization, repo_name, commit_id):
             application.logger.info("Processing version: " +  repo)
             try:
-                extracted_version = re.match(r'v*(\d\.\d\.\d)', repo)
+                extracted_version = re.match(r'v*(\d\.\d\.\d)$', repo)
                 if extracted_version is not None:
                     tmpVersion = semantic_version.Version(extracted_version.groups()[0])
                     if version is None:
                         version = tmpVersion
+                        application.logger.info("- Setting as highest version: " +  str(version))
                     elif tmpVersion > version:
                         version = tmpVersion
+                        application.logger.info("- Setting as highest version: " +  str(version))
             except ValueError:
                 application.logger.info("- Not a version!: " +  repo)
         if version is None:
