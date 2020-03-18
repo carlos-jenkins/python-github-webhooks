@@ -78,7 +78,7 @@ def getVersion(payload, branch, is_tag, event, commit_id):
         project_id = getProjectId()
         version = None
         for repo in getTagList(project_id, organization, repo_name, commit_id):
-            application.logger.info("Processing version: " +  repo)
+            application.logger.info("Processing tag: " +  repo)
             try:
                 extracted_version = re.match(r'v*(\d\.\d\.\d)$', repo)
                 if extracted_version is not None:
