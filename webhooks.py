@@ -31,10 +31,15 @@ from os import access, X_OK, remove, fdopen
 from os.path import isfile, abspath, normpath, dirname, join, basename
 import sys
 import json
+import re
+
+import json
 
 import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
+
+import google_utils
 
 application = Flask(__name__)
 
@@ -77,29 +82,40 @@ def getVersion(payload, branch, is_tag, event, commit_id):
         project_id = getProjectId()
         version = None
         for repo in getTagList(project_id, organization, repo_name, commit_id):
-            #if semantic_version.validate(repo.replace('v', '')):
+            application.logger.info("Processing tag: " +  repo)
             try:
-                tmpVersion = semantic_version.Version(repo.replace('v', '').replace("-RC", ""))
-                if version is None:
-                    version = tmpVersion
-                elif version > tmpVersion:
-                    version = tmpVersion
+                extracted_version = re.match(r'v*(\d\.\d\.\d)$', repo)
+                if extracted_version is not None:
+                    tmpVersion = semantic_version.Version(extracted_version.groups()[0])
+                    if version is None:
+                        version = tmpVersion
+                        application.logger.info("- Setting as highest version: " +  str(version))
+                    elif tmpVersion > version:
+                        version = tmpVersion
+                        application.logger.info("- Setting as highest version: " +  str(version))
             except ValueError:
-                application.logger.info("Not a version: " +  repo)
-            #else:
-                #application.logger.info("Tag " + repo.replace('v', ''))
+                application.logger.info("- Not a version!: " +  repo)
         if version is None:
             if (branch == "develop"):
-                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT-" + commit_id[0:7]
+                return os.getenv("START_VERSION", "1.0.0") + "-SNAPSHOT." + commit_id[0:7]
             else:
-                return os.getenv("START_VERSION", "1.0.0") + "-RC-" + commit_id[0:7]
+                return os.getenv("START_VERSION", "1.0.0") + "-RC." + commit_id[0:7]
         else:
             if (branch == "develop"):
-                return str(version.next_minor()) + "-SNAPSHOT-" + commit_id[0:7]
+                return str(version.next_minor()) + "-SNAPSHOT." + commit_id[0:7]
             else:
-                return str(version.next_minor()) + "-RC-" + commit_id[0:7]
+                return str(version.next_minor()) + "-RC." + commit_id[0:7]
     else:
         return commit_id[0:7]
+
+    #DOC: https://firebase.google.com/docs/database/rest/auth
+def getGoogleAccessToken(service_account_info):
+    scopes = ['https://www.googleapis.com/auth/cloud-platform']
+    credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
+    AuthorizedSession(credentials)
+    request = google.auth.transport.requests.Request()
+    credentials.refresh(request)
+    return credentials.token
 
 def getTagList(project_id, organization, repo_name, commit_id):
     registry_url="https://" + os.getenv("DOCKER_REGISTRY", "eu.gcr.io") + "/v2/" + project_id + "/github.com/" + organization + "/" + repo_name +"/tags/list"
@@ -117,10 +133,8 @@ def getTagList(project_id, organization, repo_name, commit_id):
             registry_url= "https://" + image.split(":")[0] + "/tags/list"
     try:
         application.logger.info("Registry url: " + registry_url)
-        if os.getenv("GCR_TOKEN"):
-            r = requests.get(url = registry_url, headers = {"Authorization": "Bearer " + os.getenv("GCR_TOKEN")})
-        else:
-            r = requests.get(url = registry_url)
+        access_token = google_utils.getGoogleAccessToken(json.loads(os.environ['GCP_KEY']))
+        r = requests.get(url = registry_url, headers = {"Authorization": "Bearer " + access_token})
         if r.status_code == 200:
             return r.json()["tags"]
         else:
