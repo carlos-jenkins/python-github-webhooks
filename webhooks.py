@@ -33,9 +33,13 @@ import sys
 import json
 import re
 
+import json
+
 import requests
 from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
+
+import google_utils
 
 application = Flask(__name__)
 
@@ -104,6 +108,15 @@ def getVersion(payload, branch, is_tag, event, commit_id):
     else:
         return commit_id[0:7]
 
+    #DOC: https://firebase.google.com/docs/database/rest/auth
+def getGoogleAccessToken(service_account_info):
+    scopes = ['https://www.googleapis.com/auth/cloud-platform']
+    credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
+    AuthorizedSession(credentials)
+    request = google.auth.transport.requests.Request()
+    credentials.refresh(request)
+    return credentials.token
+
 def getTagList(project_id, organization, repo_name, commit_id):
     registry_url="https://" + os.getenv("DOCKER_REGISTRY", "eu.gcr.io") + "/v2/" + project_id + "/github.com/" + organization + "/" + repo_name +"/tags/list"
     if commit_id is not None:
@@ -120,10 +133,8 @@ def getTagList(project_id, organization, repo_name, commit_id):
             registry_url= "https://" + image.split(":")[0] + "/tags/list"
     try:
         application.logger.info("Registry url: " + registry_url)
-        if os.getenv("GCR_TOKEN"):
-            r = requests.get(url = registry_url, headers = {"Authorization": "Bearer " + os.getenv("GCR_TOKEN")})
-        else:
-            r = requests.get(url = registry_url)
+        access_token = google_utils.getGoogleAccessToken(json.loads(os.environ['GCP_KEY']))
+        r = requests.get(url = registry_url, headers = {"Authorization": "Bearer " + access_token})
         if r.status_code == 200:
             return r.json()["tags"]
         else:
