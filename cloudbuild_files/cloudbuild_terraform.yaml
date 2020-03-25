@@ -4,7 +4,7 @@ steps:
     name: 'gcr.io/cloud-builders/gsutil'
     args:
       - cp 
-      - gs://support-prev-eslm_cloudbuild/rsa/cloud-build-key.enc
+      - gs://${PROJECT_ID}_cloudbuild/rsa/cloud-build-key.enc
       - cloud-build-key.enc
 
   # Decrypt the id_rsa private key
@@ -18,7 +18,7 @@ steps:
       - --location=europe
       - --keyring=cloud-build
       - --key=github-ssh-key
-      - --project=support-prev-eslm
+      - --project=$PROJECT_ID
 
   - id: Create docker image
     name: 'gcr.io/cloud-builders/docker'
