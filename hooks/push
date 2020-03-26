@@ -56,16 +56,13 @@ else
     echo "Copying generic file"
     cp -af /app/cloudbuild_files/cloudbuild.yaml .
 fi
-    
+
 # Getting configuration of allinconfig and setting subs_allinconfig var
 get_configuration_allinconfig
-#[ $? -ne 0 ] && { echo "ERROR: Not getting configuration of allinconfig"; exit 1; } 
+
 if [ $? -eq 0 ]; then
     gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
     exit $?
 else
     { echo "ERROR: Not getting configuration of allinconfig"; exit 1; } 
 fi
-
-#gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
-#exit $?

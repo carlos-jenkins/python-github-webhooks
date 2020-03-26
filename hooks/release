@@ -1,6 +1,5 @@
 #!/bin/bash
 
-ret=1
 JSON_FILE="$1"
 EVENT_TYPE="$2"
 VERSION="$3"
@@ -64,8 +63,7 @@ case "$R_ACTION" in
   ;;
   *)
     echo "Skipping release event type $R_ACTION"
-    ret=0
   ;;
 esac
 
-exit $ret
+exit ${ret:-1}

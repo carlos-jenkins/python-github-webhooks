@@ -59,8 +59,7 @@ case "$PR_ACTION" in
   ;;
   *)
     echo "Skipping pull request event type $PR_ACTION"
-    ret=0
   ;;
 esac
  
-exit $ret
+exit ${ret:-1}
