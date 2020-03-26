@@ -17,6 +17,7 @@ function get_configuration_allinconfig {
         export MS_NAME="${REPO_NAME}"
 
         # Check necessary vars
+        # Note: If CONFIG_SERVER_URL var is not exported, the process failed
         [ -z "${CONFIG_SERVER_URL}" ] && { echo "Not defined CONFIG_SERVER_URL var"; return 1; } || export CONFIG_SERVER_URL
         [ -z "${VAULT_ROLE_ID}"     ] && { echo "Not defined VAULT_ROLE_ID var"; return 1; }
         [ -z "${VAULT_SECRET_ID}"   ] && { echo "Not defined VAULT_SECRET_ID var"; return 1; }
