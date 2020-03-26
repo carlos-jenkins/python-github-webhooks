@@ -14,6 +14,9 @@ ORG_NAME=$(echo $REPO_URL | cut -d"/" -f4)
 
 case "$R_ACTION" in
   published)
+    # Loading functions
+    source $(dirname $0)/../functions/functions.sh
+
     echo "${GCP_KEY}" > /tmp/key.json
     echo "Building for ${R_ACTION}, ${TAG_NAME}, ${REPO_URL}"
     gcloud auth activate-service-account --key-file=/tmp/key.json
@@ -33,6 +36,11 @@ case "$R_ACTION" in
       # Repo is for IAC, we copy the cloudbuild file for terraform
       echo "Found IAC terraform project"
       cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
+
+    elif [ "${REPO_NAME}" == "lmes-fsa-customization" ]; then
+      # Repo is for field service customization, we copy the cloudbuild file
+      echo "Found field service customization project"
+      cp -af /app/cloudbuild_files/cloudbuild_field_service.yaml ./cloudbuild.yaml
     else
       # Copy the generic file
       echo "Copying generic file"
@@ -45,12 +53,18 @@ case "$R_ACTION" in
     gsutil cp /tmp/${TAG_NAME}.tar.gz gs://${GS_BUCKET_NAME}
     #gcloud config set builds/use_kaniko True
     gcloud config set project ${GCP_PROJECT_NAME}
+
+    # Getting configuration of allinconfig
+    get_configuration_allinconfig
+    [ $? -ne 0 ] && { echo "ERROR: Not getting configuration of allinconfig"; exit 1; } 
+
     #gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async -t ${TAG_NAME} --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}${subs_allinconfig}
     ret=$?
   ;;
   *)
     echo "Skipping release event type $R_ACTION"
+    ret=0
   ;;
 esac
 

@@ -1,0 +1,194 @@
+steps:
+- id: 'Checking Windows instance'
+  name: 'gcr.io/cloud-builders/gcloud'
+  args:
+    - compute
+    - instances
+    - get-serial-port-output
+    - ${_NAME_VM}
+    - --zone=${_ZONE}
+
+- id: 'Copying cloud-build-key.enc'
+  name: 'gcr.io/cloud-builders/gsutil'
+  args:
+    - cp
+    - gs://${_PROJECT}_cloudbuild/rsa/cloud-build-key.enc
+    - cloud-build-key.enc
+
+- id: 'Decrypting key'
+  name: 'gcr.io/cloud-builders/gcloud'
+  args:
+    - kms
+    - decrypt
+    - --ciphertext-file=cloud-build-key.enc
+    - --plaintext-file=/root/.ssh/id_rsa
+    - --location=europe
+    - --keyring=cloud_build
+    - --key=github-ssh-key
+    - --project=${_PROJECT}  
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- id: 'Configuring known_hosts'
+  name: 'gcr.io/cloud-builders/git'
+  secretEnv: ['PASSWORD_RSA']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - | 
+    chmod 600 /root/.ssh/id_rsa
+    cat <<EOF >/root/.ssh/config
+    Hostname github.com
+    IdentityFile /root/.ssh/id_rsa
+    EOF
+    echo "github.com ssh-rsa $$PASSWORD_RSA" > /root/.ssh/known_hosts
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- id: 'Cloning git repo'
+  name: 'gcr.io/cloud-builders/git'
+  args:
+    - clone
+    - -b
+    - featureDemo
+    - git@github.com:adeo/lmes-fsa-customization.git
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- id: 'Creating bucket'
+  name:  'gcr.io/cloud-builders/gsutil'
+  args: ["-m", "cp", "-r", "lmes-fsa-customization", "gs://${_PROJECT}-cloud-build-workspace-submit/$BUILD_ID/"]
+
+- id: 'Creating windows workspace'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  entrypoint: "sh"
+  secretEnv: ['PASSWORD']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "mkdir c:\workspace-$BUILD_ID"' ]
+  
+# - id: 'Creating solution dir'
+#   name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+#   entrypoint: "sh"
+#   secretEnv: ['PASSWORD']
+#   args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "mkdir c:\workspace-$BUILD_ID\solution"' ]
+
+- id: 'Copying bucket'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - gsutil -m cp -r gs://${_PROJECT}-cloud-build-workspace-submit/$BUILD_ID/lmes-fsa-customization c:/workspace-$BUILD_ID
+
+- id: 'Deleting bucket'
+  name:  'gcr.io/cloud-builders/gsutil'
+  args: ["-m", "rm", "-r", "gs://${_PROJECT}-cloud-build-workspace-submit/$BUILD_ID/"]      
+
+# Note: Is necesary here?
+- id: 'Executing Ping.ps1'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/Ping.ps1 \"AuthType=Office365;Username=${_USER_CRM};Password=${_PASS_CRM};Url=${_URL_CRM}\"
+    #- powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/Ping.ps1 \"AuthType=Office365;Username=crm.dataintegrator@crmlmes.onmicrosoft.com;Password=LeroyCRM2016!;Url=https://crmlmes-dev.crm4.dynamics.com\"
+
+# Example: UpdateSolutionVersionInCRM.ps1 -CrmConnectionString "AuthType..." -SolutionName FSACutomizations -VersionNumber 1.0.0.$(CommitNumber)
+# Nota: Este paso es el unico que toca la solucion en CRM y es solo para igualar la version con la que se esta instalando
+# - id: 'Setting version in CRM (UpdateSolutionVersionInCRM.ps1)'
+#   name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+#   secretEnv: ['PASSWORD']
+#   args: 
+#     - --hostname
+#     - ${_IP_EXTERNAL}
+#     - --username
+#     - ${_WINDOWS_USER}
+#     - --command
+#     - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/UpdateSolutionVersionInCRM.ps1 -CrmConnectionString \"AuthType=Office365;Username=${_USER_CRM};Password=${_PASS_CRM};Url=${_URL_CRM}\" -SolutionName \"FSACustomizationCustomizationSchema\" -VersionNumber \"${_SOLUTION_VERSION}\""
+#     - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/UpdateSolutionVersionInCRM.ps1 -CrmConnectionString \"AuthType=Office365;Username=crm.dataintegrator@crmlmes.onmicrosoft.com;Password=LeroyCRM2016!;Url=https://crmlmes-dev.crm4.dynamics.com\" -SolutionName \"FSACustomizationCustomizationSchema\" -VersionNumber \"${_SOLUTION_VERSION}\""
+
+# Example: UpdateSolutionVersionInFolder.ps1 -UpdateFilesFolder UrlRuta -VersionNumber 1.0.0.0.$(CommitNumber) 
+# Note: This step update version in file "lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema/Other/Solution.xml"
+- id: 'Setting version in Github (UpdateSolutionVersionInFolder.ps1)'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/UpdateSolutionVersionInFolder.ps1 -unpackedFilesFolder \"c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema\" -VersionNumber \"${_SOLUTION_VERSION}.$SHORT_SHA\""
+
+# Example: PackSolution.ps1 -UnpackedFilesFolder UrlRuta -PackageType Managed -solutionName FSACustomizations -OutputPath URLPublishArtifact
+- id: 'Packaging solution (PackSolution.ps1)'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/PackSolution.ps1 -UnpackedFilesFolder \"c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema\" -PackageType ${_TYPE_PACKAGE} -solutionName \"FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA\" -OutputPath \"c:/workspace-$BUILD_ID/\"
+
+- id: 'Renaming zip solution'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  entrypoint: "sh"
+  secretEnv: ['PASSWORD']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "rename c:\workspace-$BUILD_ID\FSACustomizationCustomizationSchema.zip FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
+
+- id: 'Adding artifactory'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  entrypoint: "sh"  
+  secretEnv: ['PASSWORD','PASSWORD_NEXUS']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "curl -s --user field-service:$$PASSWORD_NEXUS --upload-file c:/workspace-$BUILD_ID/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip http://nexus3.support-prev-eslm.tech.adeo.cloud/repository/lmes-field-service-release/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
+
+- id: 'Deleting windows workspace'
+  name: 'eu.gcr.io/${_PROJECT_SUPPORT}/windows-builder'
+  entrypoint: "sh"
+  secretEnv: ['PASSWORD']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "rmdir c:\workspace-$BUILD_ID\lmes-fsa-customization /S /Q"' ]
+  #args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "rmdir c:\workspace-$BUILD_ID /S /Q"' ]
+
+secrets:
+#- kmsKeyName: projects/${_PROJECT}/locations/europe/keyRings/cloud_build/cryptoKeys/windows-password-svc-devops
+- kmsKeyName: projects/gcp-services-pre-eslm/locations/europe/keyRings/cloud_build/cryptoKeys/windows-password-svc-devops
+  secretEnv:
+    PASSWORD: >-
+      CiQArs1culfoqnfbCBUTRHQH3gc/HFilvyitaftE4QnleWPC9CISOADG0bzr4rlBYWgvUhxXHHq3
+      OaJYDzs9C1dJiac9c+NgkuMmsHkw4OGZ1VywdoH495+ecjo9zVd6
+    PASSWORD_NEXUS: >-
+      CiQArs1cuuDZfSy+NctpymticmGTRTEY/puo8YZ7g3fwJigaAOoSNQDG0bzrYTCLOw1HB91oadrC
+      DboNLWxVm1rmsfex3M2JfqUJ8urIJuJsv9qOV5TJiLVtCwA9
+    PASSWORD_RSA: >-
+      CiQArs1cuoxQLN1px5Kir8iK+awJ6SxA8se4ROYlAbnceyKAuuUSngMAxtG864WVJ2edcinh6Dqb
+      yczjEvmlD+aA0mmxmjBBKBW9kE/jCbVqu7JedqNev7lzi21fZ0sdRcr9Y/7c9WmoTnjD+nSMr9A1
+      leODHxdXnXLHdm95BY/qreMFYoauPeRgFju6jjVI7h1QkVg8ktq67+LeqtbW2HI5phaDEvdS6R+S
+      cjxycSfBh7Xy5U7mfHQN/ljQsDpuKrPyYAQ7x6JBw4K65bY7/v0yhdG6pmIcNMmQbUgaxQX41/J4
+      i3/huPvEyzTCXXXlnttiJeBQV2cKGBpFRjFl0wfQEc1q6xOnye42ocdVPwbgzG+QL8OhFkJhZwTY
+      InnappEEAQ6kv/71vNG6uyXxZ90C9ZPRvgpfEzo396JU7n0ZghrAcz/5fA4JX/oYUA5Jrt+y5ofQ
+      wheEVWEUyXVJpl0jKiwLKG1Dn94Px3BkKIYep83hfvEE9SNnVUh7iYVAgZJGxCRfDNwqNdgWOMpq
+      H2AhmtQ5JzDI280zgHGvw2BrudW9QUxCy/sfkDieV6bjOcx81s0WZV+osJT7pJXHyroESwVquKQ=
+ 
+options:
+  substitution_option: 'ALLOW_LOOSE'
+
+# POR HACER: 
+#   - Obtener mediante un sh la config de la ip dinámica
+#       gcloud compute instances describe winvm --zone="europe-west4-a" --format='get(networkInterfaces[0].accessConfigs[0].natIP)' --project=gcp-services-pre-eslm
+#
+#   - Crear una kmsKey generica para descifrar las passwords y que no sea la de "windows-password-svc-devops"
+#
+#   - Me tiene que pasar David:
+#       -- La url de la solución de CRM para el paso de "Setting version in CRM (UpdateSolutionVersionInCRM.ps1)"
+#       -- Las urls de los entornos de PRE, INT y PRO
