@@ -142,7 +142,7 @@ steps:
   name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
   entrypoint: "sh"  
   secretEnv: ['PASSWORD','PASSWORD_NEXUS']
-  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "curl -s --user field-service:$$PASSWORD_NEXUS --upload-file c:/workspace-$BUILD_ID/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip http://nexus3.support-prev-eslm.tech.adeo.cloud/repository/lmes-field-service-release/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "curl -s --user field-service:$$PASSWORD_NEXUS --upload-file c:/workspace-$BUILD_ID/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip http://nexus3.${_PROJECT_REGISTRY}.tech.adeo.cloud/repository/lmes-field-service-release/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
 
 - id: 'Deleting windows workspace'
   name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'

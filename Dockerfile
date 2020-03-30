@@ -1,4 +1,4 @@
-ARG REGISTRY=adeo-docker-lmes-devops-release.jfrog.io
+ARG REGISTRY=eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo
 
 # Get image from allinconfig--loader to get script for retrieving configuration
 FROM $REGISTRY/allinconfig/allinconfig--loader-python3.7:latest AS allinconfig--loader
