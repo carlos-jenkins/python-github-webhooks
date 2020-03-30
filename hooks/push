@@ -62,7 +62,9 @@ get_configuration_allinconfig
 
 if [ $? -eq 0 ]; then
     gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
-    exit $?
+    ret=$?
 else
-    { echo "ERROR: Not getting configuration of allinconfig"; exit 1; } 
+    echo "ERROR: Not getting configuration of allinconfig"
 fi
+
+exit ${ret:-1}

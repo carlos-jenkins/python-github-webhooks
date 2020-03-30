@@ -1,3 +1,6 @@
+# File with generic functions
+#
+# Description: Function for get configuration of allinconfig and set subs_allinconfig var
 function get_configuration_allinconfig {
 
     # Set subs_allinconfig var
