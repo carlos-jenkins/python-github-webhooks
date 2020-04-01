@@ -92,7 +92,7 @@ steps:
     - --username
     - ${_WINDOWS_USER}
     - --command
-    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/Ping.ps1 \"AuthType=Office365;Username=${_USER_CRM};Password=${_PASS_CRM};Url=${_URL_CRM}\"
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/Ping.ps1 \"AuthType=Office365;Username=${_USER_CRM};Password=${_PASS_CRM};Url=${_URL_CRM}\""
 
 # Example cmd: UpdateSolutionVersionInCRM.ps1 -CrmConnectionString "AuthType..." -SolutionName FSACutomizations -VersionNumber 1.0.0.$(CommitNumber)
 # Note: This step is the only one that modifies the CRM solution and is used to establish the version that is being installed
@@ -130,7 +130,7 @@ steps:
     - --username
     - ${_WINDOWS_USER}
     - --command
-    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/PackSolution.ps1 -UnpackedFilesFolder \"c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema\" -PackageType ${_TYPE_PACKAGE} -solutionName \"FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA\" -OutputPath \"c:/workspace-$BUILD_ID/\"
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/PackSolution.ps1 -UnpackedFilesFolder \"c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema\" -PackageType ${_TYPE_PACKAGE} -solutionName \"FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA\" -OutputPath \"c:/workspace-$BUILD_ID/\""
 
 - id: 'Renaming zip solution'
   name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
@@ -142,7 +142,7 @@ steps:
   name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
   entrypoint: "sh"  
   secretEnv: ['PASSWORD','PASSWORD_NEXUS']
-  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "curl -s --user field-service:$$PASSWORD_NEXUS --upload-file c:/workspace-$BUILD_ID/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip http://nexus3.${_PROJECT_REGISTRY}.tech.adeo.cloud/repository/lmes-field-service-release/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "curl -s --user field-service:$$PASSWORD_NEXUS --upload-file c:/workspace-$BUILD_ID/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip ${_URL_NEXUS}/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
 
 - id: 'Deleting windows workspace'
   name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
