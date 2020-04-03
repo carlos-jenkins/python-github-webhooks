@@ -151,24 +151,24 @@ steps:
   args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "rmdir c:\workspace-$BUILD_ID\lmes-fsa-customization /S /Q"' ]
 
 secrets:
-#- kmsKeyName: projects/${PROJECT_ID}/locations/europe/keyRings/cloud_build/cryptoKeys/windows-password-svc-devops
-- kmsKeyName: projects/gcp-services-pre-eslm/locations/europe/keyRings/cloud_build/cryptoKeys/windows-password-svc-devops
+#- kmsKeyName: projects/${PROJECT_ID}/locations/europe/keyRings/cloud_build/cryptoKeys/password-svc-devops
+- kmsKeyName: projects/gcp-services-pre-eslm/locations/europe/keyRings/cloud_build/cryptoKeys/password-svc-devops
   secretEnv:
     PASSWORD: >-
-      CiQArs1culfoqnfbCBUTRHQH3gc/HFilvyitaftE4QnleWPC9CISOADG0bzr4rlBYWgvUhxXHHq3
-      OaJYDzs9C1dJiac9c+NgkuMmsHkw4OGZ1VywdoH495+ecjo9zVd6
+      CiQAlEDm2ISjcmrU/WWsBC/xY8wz+I7U3WZ6LobOJOT1lr+75CsSOADZLMfnxWE6OP+8vVxhLCX4
+      HH/kWCTyTB8peF1V9rixBjNXZ2vmdG7EpsoKQNUbeWiPamH9zQtv
     PASSWORD_NEXUS: >-
-      CiQArs1cuuDZfSy+NctpymticmGTRTEY/puo8YZ7g3fwJigaAOoSNQDG0bzrYTCLOw1HB91oadrC
-      DboNLWxVm1rmsfex3M2JfqUJ8urIJuJsv9qOV5TJiLVtCwA9
+      CiQAlEDm2COiOPyw6Lat4p2ehztIrZJBjFOiiyHYJmDdNE5bX5ESNQDZLMfnwcIOI8GK6sihPcXw
+      t21L+m/Uwc2FFc5Nui4x0AzEmuVoeX1Qy0gs/K6g+VCKgIko
     PASSWORD_RSA: >-
-      CiQArs1cuoxQLN1px5Kir8iK+awJ6SxA8se4ROYlAbnceyKAuuUSngMAxtG864WVJ2edcinh6Dqb
-      yczjEvmlD+aA0mmxmjBBKBW9kE/jCbVqu7JedqNev7lzi21fZ0sdRcr9Y/7c9WmoTnjD+nSMr9A1
-      leODHxdXnXLHdm95BY/qreMFYoauPeRgFju6jjVI7h1QkVg8ktq67+LeqtbW2HI5phaDEvdS6R+S
-      cjxycSfBh7Xy5U7mfHQN/ljQsDpuKrPyYAQ7x6JBw4K65bY7/v0yhdG6pmIcNMmQbUgaxQX41/J4
-      i3/huPvEyzTCXXXlnttiJeBQV2cKGBpFRjFl0wfQEc1q6xOnye42ocdVPwbgzG+QL8OhFkJhZwTY
-      InnappEEAQ6kv/71vNG6uyXxZ90C9ZPRvgpfEzo396JU7n0ZghrAcz/5fA4JX/oYUA5Jrt+y5ofQ
-      wheEVWEUyXVJpl0jKiwLKG1Dn94Px3BkKIYep83hfvEE9SNnVUh7iYVAgZJGxCRfDNwqNdgWOMpq
-      H2AhmtQ5JzDI280zgHGvw2BrudW9QUxCy/sfkDieV6bjOcx81s0WZV+osJT7pJXHyroESwVquKQ=
+      CiQAlEDm2CIpaFaYSYL8iFTpVP0BuJshUwvYmR8cedyEDgJqzZESngMA2SzH59vt6xtUd6wf7pql
+      PFFKWz2LxstgjoRzUJTsk6NSlREaANrN5fcl2RNAxuCd7fZgag1F72aNVgq9hbCX2c98FtX1TSk+
+      IKR3kAmIj6kgl3Iqij7cwDkU7/IWuUYvWWG7MsX7c98Qyx676aIJZ6E4F/B1mzBaUm5rHMQjtKwi
+      6gxFbwC64Tb624EbOL0GS8lz4kAuMvyq0Cv9UkexSzRw0u72qP06YnWz4/7d4aq2eY3suipKKYzU
+      H8i/LNilEYFNEmedSkLlnJvvjkGBIYNPoMy6h2t+mf4ppv9lPh5py8bwJoXyTxWeDEU4Cyr04VgJ
+      A/CAEwInAmTppE/wvcl2JwyBtQxjxCqdN7ME8jsTXfPNx6Z37vwPH6RgqC+6ZrZ4+k4TQY1PXOaF
+      2kZXtLdOBOo3h7ozNU/Ia1yZN+BHFUzgeG35yzM50lpHXFW2/eFs6I1lkw3YR50GWk5L4qENocaG
+      OQJ7OUGP8qDCdMVRV2RtIpNEe7wBzMuSLBAAkzVbV/jRYc3f7v1HOCbfTz3E6F+ayR+IWzvZ3vQ=
  
 options:
   substitution_option: 'ALLOW_LOOSE'
