@@ -1,0 +1,174 @@
+steps:
+- id: 'Checking Windows instance'
+  name: 'gcr.io/cloud-builders/gcloud'
+  args:
+    - compute
+    - instances
+    - get-serial-port-output
+    - ${_NAME_VM}
+    - --zone=${_ZONE}
+
+- id: 'Copying cloud-build-key.enc'
+  name: 'gcr.io/cloud-builders/gsutil'
+  args:
+    - cp
+    - gs://${PROJECT_ID}_cloudbuild/rsa/cloud-build-key.enc
+    - cloud-build-key.enc
+
+- id: 'Decrypting key'
+  name: 'gcr.io/cloud-builders/gcloud'
+  args:
+    - kms
+    - decrypt
+    - --ciphertext-file=cloud-build-key.enc
+    - --plaintext-file=/root/.ssh/id_rsa
+    - --location=europe
+    - --keyring=cloud_build
+    - --key=github-ssh-key
+    - --project=${PROJECT_ID}  
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- id: 'Configuring known_hosts'
+  name: 'gcr.io/cloud-builders/git'
+  secretEnv: ['PASSWORD_RSA']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - | 
+    chmod 600 /root/.ssh/id_rsa
+    cat <<EOF >/root/.ssh/config
+    Hostname github.com
+    IdentityFile /root/.ssh/id_rsa
+    EOF
+    echo "github.com ssh-rsa $$PASSWORD_RSA" > /root/.ssh/known_hosts
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- id: 'Cloning git repo'
+  name: 'gcr.io/cloud-builders/git'
+  args:
+    - clone
+    - -b
+    - featureDemo
+    - git@github.com:adeo/lmes-fsa-customization.git
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- id: 'Creating bucket'
+  name:  'gcr.io/cloud-builders/gsutil'
+  args: ["-m", "cp", "-r", "lmes-fsa-customization", "gs://${PROJECT_ID}-cloud-build-workspace-submit/$BUILD_ID/"]
+
+- id: 'Creating windows workspace'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  entrypoint: "sh"
+  secretEnv: ['PASSWORD']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "mkdir c:\workspace-$BUILD_ID"' ]
+  
+- id: 'Copying bucket'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - gsutil -m cp -r gs://${PROJECT_ID}-cloud-build-workspace-submit/$BUILD_ID/lmes-fsa-customization c:/workspace-$BUILD_ID
+
+- id: 'Deleting bucket'
+  name:  'gcr.io/cloud-builders/gsutil'
+  args: ["-m", "rm", "-r", "gs://${PROJECT_ID}-cloud-build-workspace-submit/$BUILD_ID/"]      
+
+- id: 'Executing Ping.ps1'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/Ping.ps1 \"AuthType=Office365;Username=${_USER_CRM};Password=${_PASS_CRM};Url=${_URL_CRM}\""
+
+# Example cmd: UpdateSolutionVersionInCRM.ps1 -CrmConnectionString "AuthType..." -SolutionName FSACutomizations -VersionNumber 1.0.0.$(CommitNumber)
+# Note: This step is the only one that modifies the CRM solution and is used to establish the version that is being installed
+# - id: 'Setting version in CRM (UpdateSolutionVersionInCRM.ps1)'
+#   name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+#   secretEnv: ['PASSWORD']
+#   args: 
+#     - --hostname
+#     - ${_IP_EXTERNAL}
+#     - --username
+#     - ${_WINDOWS_USER}
+#     - --command
+#     - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/UpdateSolutionVersionInCRM.ps1 -CrmConnectionString \"AuthType=Office365;Username=${_USER_CRM};Password=${_PASS_CRM};Url=${_URL_CRM}\" -SolutionName \"FSACustomizationCustomizationSchema\" -VersionNumber \"${_SOLUTION_VERSION}\""
+
+# Example cmd: UpdateSolutionVersionInFolder.ps1 -UpdateFilesFolder UrlRuta -VersionNumber 1.0.0.0.$(CommitNumber) 
+# Note: This step update version in file "lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema/Other/Solution.xml"
+- id: 'Setting version in Github (UpdateSolutionVersionInFolder.ps1)'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/UpdateSolutionVersionInFolder.ps1 -unpackedFilesFolder \"c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema\" -VersionNumber \"${_SOLUTION_VERSION}.$SHORT_SHA\""
+
+# Example cmd: PackSolution.ps1 -UnpackedFilesFolder UrlRuta -PackageType Managed -solutionName FSACustomizations -OutputPath URLPublishArtifact
+- id: 'Packaging solution (PackSolution.ps1)'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  secretEnv: ['PASSWORD']
+  args: 
+    - --hostname
+    - ${_IP_EXTERNAL}
+    - --username
+    - ${_WINDOWS_USER}
+    - --command
+    - powershell -command "c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Scripts/PackSolution.ps1 -UnpackedFilesFolder \"c:/workspace-$BUILD_ID/lmes-fsa-customization/FSA.Customization.Tools/Solutions/Schema\" -PackageType ${_TYPE_PACKAGE} -solutionName \"FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA\" -OutputPath \"c:/workspace-$BUILD_ID/\""
+
+- id: 'Renaming zip solution'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  entrypoint: "sh"
+  secretEnv: ['PASSWORD']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "rename c:\workspace-$BUILD_ID\FSACustomizationCustomizationSchema.zip FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
+
+- id: 'Adding artifactory'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  entrypoint: "sh"  
+  secretEnv: ['PASSWORD','PASSWORD_NEXUS']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "curl -s --user field-service:$$PASSWORD_NEXUS --upload-file c:/workspace-$BUILD_ID/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip ${_URL_NEXUS}/FSACustomizationCustomizationSchema-${_SOLUTION_VERSION}.$SHORT_SHA.zip"' ]
+
+- id: 'Deleting windows workspace'
+  name: 'eu.gcr.io/${_PROJECT_REGISTRY}/windows-builder'
+  entrypoint: "sh"
+  secretEnv: ['PASSWORD']
+  args: [ '-c', '/go/bin/main --hostname ${_IP_EXTERNAL} --username ${_WINDOWS_USER} --password $$PASSWORD --command "rmdir c:\workspace-$BUILD_ID\lmes-fsa-customization /S /Q"' ]
+
+secrets:
+#- kmsKeyName: projects/${PROJECT_ID}/locations/europe/keyRings/cloud_build/cryptoKeys/password-svc-devops
+- kmsKeyName: projects/gcp-services-pre-eslm/locations/europe/keyRings/cloud_build/cryptoKeys/password-svc-devops
+  secretEnv:
+    PASSWORD: >-
+      CiQAlEDm2ISjcmrU/WWsBC/xY8wz+I7U3WZ6LobOJOT1lr+75CsSOADZLMfnxWE6OP+8vVxhLCX4
+      HH/kWCTyTB8peF1V9rixBjNXZ2vmdG7EpsoKQNUbeWiPamH9zQtv
+    PASSWORD_NEXUS: >-
+      CiQAlEDm2COiOPyw6Lat4p2ehztIrZJBjFOiiyHYJmDdNE5bX5ESNQDZLMfnwcIOI8GK6sihPcXw
+      t21L+m/Uwc2FFc5Nui4x0AzEmuVoeX1Qy0gs/K6g+VCKgIko
+    PASSWORD_RSA: >-
+      CiQAlEDm2CIpaFaYSYL8iFTpVP0BuJshUwvYmR8cedyEDgJqzZESngMA2SzH59vt6xtUd6wf7pql
+      PFFKWz2LxstgjoRzUJTsk6NSlREaANrN5fcl2RNAxuCd7fZgag1F72aNVgq9hbCX2c98FtX1TSk+
+      IKR3kAmIj6kgl3Iqij7cwDkU7/IWuUYvWWG7MsX7c98Qyx676aIJZ6E4F/B1mzBaUm5rHMQjtKwi
+      6gxFbwC64Tb624EbOL0GS8lz4kAuMvyq0Cv9UkexSzRw0u72qP06YnWz4/7d4aq2eY3suipKKYzU
+      H8i/LNilEYFNEmedSkLlnJvvjkGBIYNPoMy6h2t+mf4ppv9lPh5py8bwJoXyTxWeDEU4Cyr04VgJ
+      A/CAEwInAmTppE/wvcl2JwyBtQxjxCqdN7ME8jsTXfPNx6Z37vwPH6RgqC+6ZrZ4+k4TQY1PXOaF
+      2kZXtLdOBOo3h7ozNU/Ia1yZN+BHFUzgeG35yzM50lpHXFW2/eFs6I1lkw3YR50GWk5L4qENocaG
+      OQJ7OUGP8qDCdMVRV2RtIpNEe7wBzMuSLBAAkzVbV/jRYc3f7v1HOCbfTz3E6F+ayR+IWzvZ3vQ=
+ 
+options:
+  substitution_option: 'ALLOW_LOOSE'

@@ -16,6 +16,9 @@ REPO_NAME=$(jq -r ".repository.name" $JSON_FILE)
 COMMIT_SHA=$(echo ${COMMIT_ID} | cut -c1-7)
 ORG_NAME=$(echo $REPO_URL | cut -d"/" -f4)
 
+# Loading functions
+source $(dirname $0)/../functions/functions.sh
+
 echo "${GCP_KEY}" > /tmp/key.json
 rm -rf /tmp/${REPO_NAME}-${COMMIT_ID}
 echo "Building for ${REF_TYPE}, ${BRANCH_NAME}, ${TAG_NAME}, ${COMMIT_ID}, ${REPO_URL}, ${REPO_URL}/archive/${COMMIT_ID}.zip"
@@ -34,29 +37,34 @@ shopt -u dotglob
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
 #gcloud config set builds/use_kaniko True
 gcloud config set project ${GCP_PROJECT_NAME}
-if [ -z ${TAG_NAME} ]; then
-    if [ -s cloudbuild.yaml ]; then
-        echo "Found cloudbuild.yaml in source repository"
-    elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
-        # Repo is for IAC, we copy the cloudbuild file for terraform
-        echo "Found IAC terraform project"
-        cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
-    else
-        echo "Copying generic file"
-        cp -af /app/cloudbuild_files/cloudbuild.yaml .
-    fi
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${VERSION}
+
+# Setting TAG_NAME value if it's empty
+[ -z ${TAG_NAME} ] && TAG_NAME=${VERSION}
+
+# Checking cloudbuild
+if [ -s cloudbuild.yaml ]; then
+    echo "Found cloudbuild.yaml in source repository"
+elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
+    # Repo is for IAC, we copy the cloudbuild file for terraform
+    echo "Found IAC terraform project"
+    cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
+elif [ "${REPO_NAME}" == "lmes-fsa-customization" ]; then
+    # Repo is for field service customization, we copy the cloudbuild file 
+    echo "Found field service customization project"
+    cp -af /app/cloudbuild_files/cloudbuild_field_service.yaml ./cloudbuild.yaml
 else
-    if [ -s cloudbuild.yaml ]; then
-        echo "Found cloudbuild.yaml in source repository"
-    elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
-        # Repo is for IAC, we copy the cloudbuild file for terraform
-        echo "Found IAC terraform project"
-        cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
-    else
-        echo "Copying generic file"
-        cp -af /app/cloudbuild_files/cloudbuild.yaml .
-    fi
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=$TAG_NAME
-    #--substitutions COMMIT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME}  
+    echo "Copying generic file"
+    cp -af /app/cloudbuild_files/cloudbuild.yaml .
 fi
+
+# Getting configuration of allinconfig and setting subs_allinconfig var
+get_configuration_allinconfig
+
+if [ $? -eq 0 ]; then
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
+    ret=$?
+else
+    echo "ERROR: Not getting configuration of allinconfig"
+fi
+
+exit ${ret:-1}
