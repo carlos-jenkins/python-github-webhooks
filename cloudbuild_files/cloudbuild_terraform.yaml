@@ -16,7 +16,7 @@ steps:
       - --ciphertext-file=cloud-build-key.enc
       - --plaintext-file=id_rsa
       - --location=europe
-      - --keyring=cloud-build
+      - --keyring=cloud-build-tools
       - --key=github-ssh-key
       - --project=$PROJECT_ID
 
