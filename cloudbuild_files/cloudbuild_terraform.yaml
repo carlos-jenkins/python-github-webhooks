@@ -17,7 +17,7 @@ steps:
       - --plaintext-file=id_rsa
       - --location=europe
       - --keyring=cloud-build-tools
-      - --key=github-ssh-key
+      - --key=github-key
       - --project=$PROJECT_ID
 
   - id: Create docker image
