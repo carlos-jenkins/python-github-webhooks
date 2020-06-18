@@ -19,6 +19,7 @@ RUN apk add --update \
  unzip \
  jq \
  python3 \
+ libxml2-utils \
  py3-yaml && \
  pip3 install kubernetes 
 

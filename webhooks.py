@@ -43,9 +43,9 @@ import google_utils
 
 application = Flask(__name__)
 
-def runShell(script, tmpfile, event, version):
+def runShell(script, tmpfile, event, version, language):
     proc = Popen(
-        [script, tmpfile, event, version],
+        [script, tmpfile, event, version, language],
         stdout=PIPE, stderr=PIPE
     )
     stdout, stderr = proc.communicate()
@@ -62,10 +62,10 @@ def runShell(script, tmpfile, event, version):
         'stderr': stderr.decode('utf-8'),
     }
 
-def runFunction(scripts, tmpfile, event, version):
+def runFunction(scripts, tmpfile, event, version, language):
     ran = {}
     for s in scripts:
-        ran[basename(s)] = runShell(s, tmpfile, event, version)
+        ran[basename(s)] = runShell(s, tmpfile, event, version, language)
     # Remove temporal file
     remove(tmpfile)
     return ran
@@ -257,8 +257,12 @@ def index():
 
     # Calculate version
     version = getVersion(payload, branch, is_tag, event, commit_id)
+    if payload["repository"]["language"]:
+        language=payload["repository"]["language"]
+    else:
+        language="unknown"
     # Run scripts
-    ran = runFunction(scripts, tmpfile, event, version)
+    ran = runFunction(scripts, tmpfile, event, version, language)
 
     info = config.get('return_scripts_info', False)
     if not info:
