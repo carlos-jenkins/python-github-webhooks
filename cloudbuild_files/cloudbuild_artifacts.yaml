@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', '.']
+  args: ['build', '-t', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', "--build-arg", "BUILD_ID=${BUILD_ID}", '.']
 tags: ['###REPO_TAG###']
 options:
   substitution_option: 'ALLOW_LOOSE'

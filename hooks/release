@@ -44,6 +44,23 @@ case "$R_ACTION" in
 
       # Run allinconfig loader
       runAllinconfigLoader=0
+    elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-images" ./Dockerfile && ! grep -q "runner" ./Dockerfile; then
+      #Artifact only
+      echo "Artifact only project"
+      case $LANGUAGE in
+      Java)
+          GROUP=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='groupId']/text()" pom.xml)
+          ARTIFACT=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml)
+          VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
+          REPO_TAG="${GROUP}.${ARTIFACT}-${VERSION}"
+          cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+          sed -i "s/###REPO_TAG###/${REPO_TAG}/g" ./cloudbuild.yaml
+          ;;
+      *)
+          cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+          ed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
+          ;;
+      esac
     else
       # Copy the generic file
       echo "Copying generic file"
