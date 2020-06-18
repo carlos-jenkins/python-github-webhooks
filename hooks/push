@@ -70,6 +70,7 @@ elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-im
         ;;
     *)
         ;;
+    esac
     cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
 else
     echo "Copying generic file"
