@@ -66,7 +66,7 @@ elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-im
         GROUP=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='groupId']/text()" pom.xml)
         ARTIFACT=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml)
         VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
-        REPO_TAG="${GROUP}.${ARTIFACT}:${VERSION}"
+        REPO_TAG="${GROUP}.${ARTIFACT}-${VERSION}"
         cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
         sed -i "s/###REPO_TAG###/${REPO_TAG}/g" ./cloudbuild.yaml
         ;;
