@@ -67,11 +67,14 @@ elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-im
         ARTIFACT=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml)
         VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
         REPO_TAG="${GROUP}.${ARTIFACT}:${VERSION}"
+        cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+        sed -i "s/###REPO_TAG###/${REPO_TAG}/g" ./cloudbuild.yaml
         ;;
     *)
+        cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+        ed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
         ;;
     esac
-    cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
 else
     echo "Copying generic file"
     cp -af /app/cloudbuild_files/cloudbuild.yaml .
@@ -83,11 +86,7 @@ if [ $runAllinconfigLoader -eq 0 ]; then
    [ $? -ne 0 ] && { echo "ERROR: Not getting configuration of allinconfig"; exit 1; }
 fi
 
-if [ -z $REPO_TAG ]; then
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
-else
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz -t $REPO_TAG --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
-fi
+gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
 ret=$?
 
 exit ${ret:-1}
