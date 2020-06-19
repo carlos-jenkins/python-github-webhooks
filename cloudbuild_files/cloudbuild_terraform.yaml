@@ -58,3 +58,6 @@ steps:
 timeout: 1800s
 options:
     substitution_option: 'ALLOW_LOOSE'
+images: 
+  - 'eu.gcr.io/$PROJECT_ID/github.com/${_ORG_NAME}/$REPO_NAME:${TAG_NAME}'
+  - 'eu.gcr.io/$PROJECT_ID/github.com/${_ORG_NAME}/$REPO_NAME:latest'
