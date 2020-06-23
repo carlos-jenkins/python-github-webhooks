@@ -72,7 +72,7 @@ elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-im
         ;;
     *)
         cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
-        ed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
+        sed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
         ;;
     esac
 else
