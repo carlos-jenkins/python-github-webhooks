@@ -9,3 +9,4 @@ steps:
   args: ['tag', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$TAG_NAME']
 
 images: ['eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$COMMIT_SHA', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:latest', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$TAG_NAME']
+timeout: 3600s
