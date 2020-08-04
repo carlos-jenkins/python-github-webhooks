@@ -127,7 +127,7 @@ def getTagList(project_id, organization, repo_name, commit_id):
             # Get only one image as the rest are going to have the same tags (monorepo)
             #application.logger.info(yaml.load(base64.b64decode(content.json()["content"])))
             image_dict = yaml.load(base64.b64decode(content.json()["content"]), Loader=yaml.FullLoader)
-            if image_dict["images"] and image_dict["images"][0]:
+            if "images" in image_dict:
             # Now replace substitution vars
                 for sub in substitutions.keys():
                     image = image.replace(sub, substitutions.get(sub))
