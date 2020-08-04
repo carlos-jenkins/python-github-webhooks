@@ -126,11 +126,12 @@ def getTagList(project_id, organization, repo_name, commit_id):
             substitutions = {"$PROJECT_ID":project_id, "$_ORG_NAME":organization, "eu.gcr.io":"eu.gcr.io/v2"}
             # Get only one image as the rest are going to have the same tags (monorepo)
             #application.logger.info(yaml.load(base64.b64decode(content.json()["content"])))
-            image = yaml.load(base64.b64decode(content.json()["content"]), Loader=yaml.FullLoader)["images"][0]
+            image_dict = yaml.load(base64.b64decode(content.json()["content"]), Loader=yaml.FullLoader)
+            if image_dict["images"] and image_dict["images"][0]:
             # Now replace substitution vars
-            for sub in substitutions.keys():
-                image = image.replace(sub, substitutions.get(sub))
-            registry_url= "https://" + image.split(":")[0] + "/tags/list"
+                for sub in substitutions.keys():
+                    image = image.replace(sub, substitutions.get(sub))
+                registry_url= "https://" + image.split(":")[0] + "/tags/list"
     try:
         application.logger.info("Registry url: " + registry_url)
         access_token = google_utils.getGoogleAccessToken(json.loads(os.environ['GCP_KEY']))
