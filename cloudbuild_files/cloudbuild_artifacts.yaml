@@ -1,7 +1,0 @@
-steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'eu.gcr.io/$PROJECT_ID/github.com/$_ORG_NAME/$REPO_NAME:$SHORT_SHA', "--build-arg", "BUILD_ID=${BUILD_ID}", "--build-arg", "COMMIT_SHA=${COMMIT_SHA}", "--build-arg", "REPO_NAME=${REPO_NAME}", "--build-arg", "ORG_NAME=${_ORG_NAME}", '.']
-tags: ['###REPO_TAG###']
-timeout: 3600s
-options:
-  substitution_option: 'ALLOW_LOOSE'
