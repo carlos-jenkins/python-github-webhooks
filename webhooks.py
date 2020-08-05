@@ -83,13 +83,15 @@ def getCloudBuildFiles():
         zipball_response = requests.get(releases_response.json()["zipball_url"], auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
         if zipball_response.status_code < 300:
             zipFile = zipfile.ZipFile(io.BytesIO(zipball_response.content))
-            os.mkdir("/tmp/cloudbuild-pipelines")
-            os.mkdir("/app/cloudbuild_files/")
+            if not os.path.exists("/tmp/cloudbuild-pipelines"):
+                os.mkdir("/tmp/cloudbuild-pipelines")
+            if not os.path.exists("/app/cloudbuild_files"):
+                os.mkdir("/app/cloudbuild_files")
             zipFile.extractall("/tmp/cloudbuild-pipelines")
             for root, subdirs, files in os.walk('/tmp/cloudbuild-pipelines'):
                 for subdir in subdirs:
                     if subdir == "gwalker":
-                        for gwalkerRoot, sdirs, sfiles in os.walk(os.path.join(root, name)):
+                        for gwalkerRoot, sdirs, sfiles in os.walk(os.path.join(root, subdir)):
                             for f in sfiles:
                                 shutil.copy(os.path.join(gwalkerRoot, f), "/app/cloudbuild_files/" + f)
         else:
