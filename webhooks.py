@@ -32,8 +32,8 @@ from os.path import isfile, abspath, normpath, dirname, join, basename
 import sys
 import json
 import re
-
-import json
+import zipfile, io
+import shutil
 
 import requests
 from ipaddress import ip_address, ip_network
@@ -63,12 +63,41 @@ def runShell(script, tmpfile, event, version, language):
     }
 
 def runFunction(scripts, tmpfile, event, version, language):
+    getCloudBuildFiles()
     ran = {}
     for s in scripts:
         ran[basename(s)] = runShell(s, tmpfile, event, version, language)
     # Remove temporal file
     remove(tmpfile)
     return ran
+
+def getCloudBuildFiles():
+    # Get through the api the latest release
+    github_url = "https://api.github.com/repos/adeo/cloud-build-pipelines/releases/"
+    if os.getenv("PIPELINES_VERSION", "latest") != "latest":
+        github_url += "tags/" + os.getenv("PIPELINES_VERSION")
+    else:
+        github_url += "latest"
+    releases_response = requests.get(github_url, auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
+    if releases_response.status_code < 300:
+        zipball_response = requests.get(releases_response.json()["zipball_url"], auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
+        if zipball_response.status_code < 300:
+            zipFile = zipfile.ZipFile(io.BytesIO(zipball_response.content))
+            if not os.path.exists("/tmp/cloudbuild-pipelines"):
+                os.mkdir("/tmp/cloudbuild-pipelines")
+            if not os.path.exists("/app/cloudbuild_files"):
+                os.mkdir("/app/cloudbuild_files")
+            zipFile.extractall("/tmp/cloudbuild-pipelines")
+            for root, subdirs, files in os.walk('/tmp/cloudbuild-pipelines'):
+                for subdir in subdirs:
+                    if subdir == "gwalker":
+                        for gwalkerRoot, sdirs, sfiles in os.walk(os.path.join(root, subdir)):
+                            for f in sfiles:
+                                shutil.copy(os.path.join(gwalkerRoot, f), "/app/cloudbuild_files/" + f)
+        else:
+            application.logger.error("Could not get cloudbuild zipball")
+    else:
+        application.logger.error("Could not get release from github")
 
 def getVersion(payload, branch, is_tag, event, commit_id):
     if is_tag and event == "release":
