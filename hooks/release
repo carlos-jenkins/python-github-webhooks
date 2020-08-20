@@ -37,7 +37,7 @@ case "$R_ACTION" in
       # Repo is for IAC, we copy the cloudbuild file for terraform
       echo "Found IAC terraform project"
       cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
-    elif [ "${REPO_NAME}" == "lmes-fsa-customization" ]; then
+    elif [ "${REPO_NAME}" == "lmes-fieldservice-customization" ]; then
       # Repo is for field service customization, we copy the cloudbuild file
       echo "Found field service customization project"
       cp -af /app/cloudbuild_files/cloudbuild_field_service.yaml ./cloudbuild.yaml
