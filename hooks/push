@@ -45,39 +45,52 @@ gcloud config set project ${GCP_PROJECT_NAME}
 [ -z ${TAG_NAME} ] && TAG_NAME=${VERSION}
 
 # Checking cloudbuild
-if [ -s cloudbuild.yaml ]; then
-    echo "Found cloudbuild.yaml in source repository"
-elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
-    # Repo is for IAC, we copy the cloudbuild file for terraform
-    echo "Found IAC terraform project"
-    cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
-elif [ "${REPO_NAME}" == "lmes-fsa-customization" ]; then
-    # Repo is for field service customization, we copy the cloudbuild file 
-    echo "Found field service customization project"
-    cp -af /app/cloudbuild_files/cloudbuild_field_service.yaml ./cloudbuild.yaml
-
-    # Run allinconfig loader
-    runAllinconfigLoader=0
-elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-images" ./Dockerfile && ! grep -q "runner" ./Dockerfile; then
-    #Artifact only
-    echo "Artifact only project"
-    case $LANGUAGE in
-    Java)
-        GROUP=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='groupId']/text()" pom.xml)
-        ARTIFACT=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml)
-        VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
-        REPO_TAG="${GROUP}.${ARTIFACT}-${VERSION}"
-        cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
-        sed -i "s/###REPO_TAG###/${REPO_TAG}/g" ./cloudbuild.yaml
-        ;;
-    *)
-        cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
-        sed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
-        ;;
-    esac
+if [ -s .lmes-ci.yaml ]; then
+    echo "Found .lmes-ci.yaml in source repository"
+    cloudBuildType=$(yq read .lmes-ci.yaml 'build.type')
+    echo "Coping the cloudbuild file /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml"
+    cp -af /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml ./cloudbuild.yaml
+elif [ -s .lmes-ci.yml ]; then
+    echo "Found .lmes-ci.yml in source repository"
+    cloudBuildType=$(yq read .lmes-ci.yml 'build.type')
+    echo "Coping the cloudbuild file /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml"
+    cp -af /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml ./cloudbuild.yaml
 else
-    echo "Copying generic file"
-    cp -af /app/cloudbuild_files/cloudbuild.yaml .
+    echo "DEPRECATED: ${REPO_NAME} does not have a .lmes-ci.yaml file"
+    if [ -s cloudbuild.yaml ]; then
+        echo "Found cloudbuild.yaml in source repository"
+    elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
+        # Repo is for IAC, we copy the cloudbuild file for terraform
+        echo "Found IAC terraform project"
+        cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
+    elif [ "${REPO_NAME}" == "lmes-fsa-customization" ]; then
+        # Repo is for field service customization, we copy the cloudbuild file 
+        echo "Found field service customization project"
+        cp -af /app/cloudbuild_files/cloudbuild_field_service.yaml ./cloudbuild.yaml
+
+        # Run allinconfig loader
+        runAllinconfigLoader=0
+    elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-images" ./Dockerfile && ! grep -q "runner" ./Dockerfile; then
+        #Artifact only
+        echo "Artifact only project"
+        case $LANGUAGE in
+        Java)
+            GROUP=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='groupId']/text()" pom.xml)
+            ARTIFACT=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml)
+            VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
+            REPO_TAG="${GROUP}.${ARTIFACT}-${VERSION}"
+            cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+            sed -i "s/###REPO_TAG###/${REPO_TAG}/g" ./cloudbuild.yaml
+            ;;
+        *)
+            cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+            sed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
+            ;;
+        esac
+    else
+        echo "Copying generic file"
+        cp -af /app/cloudbuild_files/cloudbuild.yaml .
+    fi
 fi
 
 if [ $runAllinconfigLoader -eq 0 ]; then

@@ -29,6 +29,10 @@ RUN curl -sSL https://sdk.cloud.google.com | bash
 
 ENV PATH $PATH:/root/google-cloud-sdk/bin
 
+RUN wget https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 && \
+chmod +x yq_linux_amd64 && \
+mv yq_linux_amd64 /usr/local/bin/yq
+
 COPY . /app
 
 RUN chmod +x /app/hooks/*
