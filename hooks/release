@@ -80,7 +80,6 @@ case "$R_ACTION" in
     gsutil cp ${WORK_DIR}/${TAG_NAME}.tar.gz gs://${GS_BUCKET_NAME}
     rm ${WORK_DIR}/${TAG_NAME}.tar.gz
 
-    #gcloud config set builds/use_kaniko True
     gcloud config set project ${GCP_PROJECT_NAME}
 
     if [ $runAllinconfigLoader -eq 0 ]; then
@@ -90,6 +89,7 @@ case "$R_ACTION" in
     fi
 
     gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}${subs_allinconfig}
+    # echo "gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}${subs_allinconfig}"    
     ret=$?
   ;;
   *)

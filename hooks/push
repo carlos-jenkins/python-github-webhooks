@@ -32,12 +32,12 @@ gcloud auth activate-service-account --key-file=/tmp/key.json
 
 # Including hidden files in *
 shopt -s dotglob
-cd $REPOPATH
+cd ${REPOPATH}
 tar cvzf /tmp/${COMMIT_ID}.tar.gz *
 # Excluding hidden files in *
 shopt -u dotglob
 gsutil cp /tmp/${COMMIT_ID}.tar.gz gs://${GS_BUCKET_NAME}
-rm tmp/${COMMIT_ID}.tar.gz
+rm /tmp/${COMMIT_ID}.tar.gz
 gcloud config set project ${GCP_PROJECT_NAME}
 
 # Setting TAG_NAME value if it's empty
@@ -92,6 +92,7 @@ if [ $runAllinconfigLoader -eq 0 ]; then
 fi
 
 gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}
+# echo "gcloud builds submit gs://${GS_BUCKET_NAME}/${COMMIT_ID}.tar.gz --async --config cloudbuild.yaml --substitutions SHORT_SHA=${COMMIT_SHA},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},COMMIT_SHA=${COMMIT_ID},TAG_NAME=${TAG_NAME}${subs_allinconfig}"
 ret=$?
 
 exit ${ret:-1}

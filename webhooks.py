@@ -136,91 +136,6 @@ def runFunction(scripts, payload, event, version, language):
 
     return ran
 
-
-
-
-# def (owner, repo, tag):
-#     return get(f'https://{HOST}/repos/{owner}/{repo}/releases/tags/{tag}')
-
-
-# def (owner, repo):
-#     return get(f'https://{HOST}/repos/{owner}/{repo}/releases/latest')
-
-
-
-    # print('------------------')
-    # print(p1)
-    # print('------------------')
-
-
-
-    # url1 = get_zipurl_by_releaseurl(
-    #     'https://api.github.com/repos/adeo/cloud-build-pipelines/releases/latest',
-    # )
-
-    # # url2 = get_zipurl_by_releaseurl(
-    # #     'https://api.github.com/repos/adeo/cloud-build-pipelines/releases/tags/1.0.0',
-    # # )
-
-
-    # print('------------------')
-    # print(url1)
-    # print(url2)
-    # print('------------------')
-
-    # p1 = downloadzip_repo_from_url(
-    #     url,
-    #     'cloud-build-pipelines',
-    #     '1.0.0',
-    #     repopath,
-    # )
-
-    # cbpath = mkdtemp()
-    # p1 = downloadzip_repo_from_url(url, cbpath)
-
-    # get_zipurl_by_releaseurl
-
-    
-
-
-    # ['/app/hooks/push'] /tmp/tmpjgvezr_q push 1.5.0-RC1 HCL
-
-    # getCloudBuildFiles()
-    # ran = {}
-    # for s in scripts:
-    #     ran[basename(s)] = runShell(s, tmpfile, event, version, language)
-    # # Remove temporal file
-    # remove(tmpfile)
-    # return ran
-
-# def getCloudBuildFiles():
-#     # Get through the api the latest release
-#     github_url = "https://api.github.com/repos/adeo/cloud-build-pipelines/releases/"
-#     if os.getenv("PIPELINES_VERSION", "latest") != "latest":
-#         github_url += "tags/" + os.getenv("PIPELINES_VERSION")
-#     else:
-#         github_url += "latest"
-#     releases_response = requests.get(github_url, auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
-#     if releases_response.status_code < 300:
-#         zipball_response = requests.get(releases_response.json()["zipball_url"], auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
-#         if zipball_response.status_code < 300:
-#             zipFile = zipfile.ZipFile(io.BytesIO(zipball_response.content))
-#             if not os.path.exists("/tmp/cloudbuild-pipelines"):
-#                 os.mkdir("/tmp/cloudbuild-pipelines")
-#             if not os.path.exists("/app/cloudbuild_files"):
-#                 os.mkdir("/app/cloudbuild_files")
-#             zipFile.extractall("/tmp/cloudbuild-pipelines")
-#             for root, subdirs, files in os.walk('/tmp/cloudbuild-pipelines'):
-#                 for subdir in subdirs:
-#                     if subdir == "gwalker":
-#                         for gwalkerRoot, sdirs, sfiles in os.walk(os.path.join(root, subdir)):
-#                             for f in sfiles:
-#                                 shutil.copy(os.path.join(gwalkerRoot, f), "/app/cloudbuild_files/" + f)
-#         else:
-#             application.logger.error("Could not get cloudbuild zipball")
-#     else:
-#         application.logger.error("Could not get release from github")
-
 def getVersion(payload, branch, is_tag, event, commit_id):
     if is_tag and event == "release":
         return payload['release']['tag_name'].replace('v', '')
@@ -258,15 +173,6 @@ def getVersion(payload, branch, is_tag, event, commit_id):
                 return str(version.next_minor()) + "-RC." + commit_id[0:7]
     else:
         return commit_id[0:7]
-
-#     #DOC: https://firebase.google.com/docs/database/rest/auth
-# def getGoogleAccessToken(service_account_info):
-#     scopes = ['https://www.googleapis.com/auth/cloud-platform']
-#     credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
-#     AuthorizedSession(credentials)
-#     request = google.auth.transport.requests.Request()
-#     credentials.refresh(request)
-#     return credentials.token
 
 def getTagList(project_id, organization, repo_name, commit_id):
     registry_url="https://" + os.getenv("DOCKER_REGISTRY", "eu.gcr.io") + "/v2/" + project_id + "/github.com/" + organization + "/" + repo_name +"/tags/list"
