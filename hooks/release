@@ -3,6 +3,10 @@
 JSON_FILE="$1"
 EVENT_TYPE="$2"
 VERSION="$3"
+LANGUAGE="$4"
+REPOPATH="$5"
+PIPELINE_DIR_PATH="$6"
+PIPELINE_FILE="$7"
 
 R_ACTION=$(jq -r ".action" $JSON_FILE)
 ZIPBALL_URL=$(jq -r ".release.zipball_url" $JSON_FILE)
@@ -21,25 +25,11 @@ case "$R_ACTION" in
     echo "${GCP_KEY}" > /tmp/key.json
     echo "Building for ${R_ACTION}, ${TAG_NAME}, ${REPO_URL}"
     gcloud auth activate-service-account --key-file=/tmp/key.json
-    curl -s -L --user "${GITHUB_USER}:${GITHUB_TOKEN}" "${ZIPBALL_URL}" --output /tmp/${TAG_NAME}.zip
-    mkdir /tmp/${TAG_NAME}
-    unzip /tmp/${TAG_NAME}.zip -d /tmp/
     # Including hidden files in *
     shopt -s dotglob
-    mv /tmp/${ORG_NAME}-${REPO_NAME}*/* /tmp/${TAG_NAME}
-    cd /tmp/${TAG_NAME}
+    cd "${REPOPATH}"
 
-    if [ -s .lmes-ci.yaml ]; then
-      echo "Found .lmes-ci.yaml in source repository"
-      cloudBuildType=$(yq read .lmes-ci.yaml 'build.type')
-      echo "Coping the cloudbuild file /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml"
-      cp -af /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml ./cloudbuild.yaml
-    elif [ -s .lmes-ci.yml ]; then
-      echo "Found .lmes-ci.yml in source repository"
-      cloudBuildType=$(yq read .lmes-ci.yml 'build.type')
-      echo "Coping the cloudbuild file /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml"
-      cp -af /app/cloudbuild_files/cloudbuild_${cloudBuildType}.yaml ./cloudbuild.yaml
-    else
+    if [ "${PIPELINE_FILE}" == "" ]; then
       echo "DEPRECATED: ${REPO_NAME} does not have a .lmes-ci.yaml file"
       if [ -s cloudbuild.yaml ]; then
         # File cloudbuild.yaml exists in repo, we do nothing
@@ -48,11 +38,11 @@ case "$R_ACTION" in
       elif ls -1 *.tf > /dev/null 2>&1 && cat *.tf | tr -d '\n' | grep -q 'terraform.*{'; then
         # Repo is for IAC, we copy the cloudbuild file for terraform
         echo "Found IAC terraform project"
-        cp -af /app/cloudbuild_files/cloudbuild_terraform.yaml ./cloudbuild.yaml
+        cp -af  ${PIPELINE_DIR_PATH}/cloudbuild_terraform.yaml ./cloudbuild.yaml
       elif [ "${REPO_NAME}" == "lmes-fsa-customization" ]; then
         # Repo is for field service customization, we copy the cloudbuild file
         echo "Found field service customization project"
-        cp -af /app/cloudbuild_files/cloudbuild_field_service.yaml ./cloudbuild.yaml
+        cp -af  ${PIPELINE_DIR_PATH}/cloudbuild_field_service.yaml ./cloudbuild.yaml
 
         # Run allinconfig loader
         runAllinconfigLoader=0
@@ -65,25 +55,31 @@ case "$R_ACTION" in
             ARTIFACT=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml)
             VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
             REPO_TAG="${GROUP}.${ARTIFACT}-${VERSION}"
-            cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+            cp -af  ${PIPELINE_DIR_PATH}/cloudbuild_artifacts.yaml ./cloudbuild.yaml
             sed -i "s/###REPO_TAG###/${REPO_TAG}/g" ./cloudbuild.yaml
             ;;
         *)
-            cp -af /app/cloudbuild_files/cloudbuild_artifacts.yaml ./cloudbuild.yaml
+            cp -af  ${PIPELINE_DIR_PATH}/cloudbuild_artifacts.yaml ./cloudbuild.yaml
             sed -i "s/###REPO_TAG###/Unknown/g" ./cloudbuild.yaml
             ;;
         esac
       else
         # Copy the generic file
         echo "Copying generic file"
-        cp -af /app/cloudbuild_files/cloudbuild.yaml .
+        cp -af  ${PIPELINE_DIR_PATH}/cloudbuild.yaml .
       fi
+    else
+        echo "Copying the project file ${PIPELINE_FILE}"
+        cp -af $PIPELINE_FILE ./cloudbuild.yaml
     fi
 
-    tar cvzf /tmp/${TAG_NAME}.tar.gz *
+    WORK_DIR=$(mktemp -d)
+    tar cvzf ${WORK_DIR}/${TAG_NAME}.tar.gz *
     # Excluding hidden files in *
     shopt -u dotglob
-    gsutil cp /tmp/${TAG_NAME}.tar.gz gs://${GS_BUCKET_NAME}
+    gsutil cp ${WORK_DIR}/${TAG_NAME}.tar.gz gs://${GS_BUCKET_NAME}
+    rm ${WORK_DIR}/${TAG_NAME}.tar.gz
+
     #gcloud config set builds/use_kaniko True
     gcloud config set project ${GCP_PROJECT_NAME}
 
