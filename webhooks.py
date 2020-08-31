@@ -96,6 +96,7 @@ def get_pipeline_by_lmestype(pipelines_path, lmestype=None):
 def runFunction(scripts, payload, event, version, language):
     repo_container_path = mkdtemp()
 
+    # TODO: replace it by a strategy pattern
     repo_path = downloadzip_and_unzip_by_commit(
         payload['repository']['html_url'],
         payload['head_commit']['id'],
