@@ -125,7 +125,7 @@ def runFunction(scripts, payload, event, version, language):
     with fdopen(osfd, 'w') as pf:
         pf.write(dumps(payload))
 
-    args = filter(None, [tmpfile, event, version, language, repo_path, pipelines_path, pipeline])
+    args = filter(None, [tmpfile, event, version, language, repo_path, os.path.join(pipelines_path, 'gwalker'), pipeline])
     ran = {}
     for s in scripts:
         ran[basename(s)] = runShell(s, *args)
