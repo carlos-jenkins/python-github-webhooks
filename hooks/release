@@ -43,7 +43,6 @@ case "$R_ACTION" in
         # Repo is for field service customization, we copy the cloudbuild file
         echo "Found field service customization project"
         cp -af  ${PIPELINE_DIR_PATH}/cloudbuild_field_service.yaml ./cloudbuild.yaml
-
         # Run allinconfig loader
         runAllinconfigLoader=0
       elif grep -q "eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo/lmes-docker-base-images" ./Dockerfile && ! grep -q "runner" ./Dockerfile; then
@@ -88,8 +87,8 @@ case "$R_ACTION" in
        [ $? -ne 0 ] && { echo "ERROR: Not getting configuration of allinconfig"; exit 1; } 
     fi
 
-    gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}${subs_allinconfig}
     # echo "gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME}${subs_allinconfig}"    
+    gcloud builds submit gs://${GS_BUCKET_NAME}/${TAG_NAME}.tar.gz --async --substitutions TAG_NAME=${TAG_NAME},REPO_NAME=${REPO_NAME},_ORG_NAME=${ORG_NAME},_GS_BUCKET_NAME="${GS_BUCKET_NAME}"${subs_allinconfig}
     ret=$?
   ;;
   *)

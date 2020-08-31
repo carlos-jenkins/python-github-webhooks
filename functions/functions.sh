@@ -15,19 +15,15 @@ function get_configuration_allinconfig {
         echo "Getting configuration of allinconfig"
         
         # Export necessary vars
-        # Note: VAULT_ROLE_ID, VAULT_SECRET_ID, DEPLOY_ENV and CONFIG_SERVER_URL are exported
+        # Note: DEPLOY_ENV and CONFIG_SERVER_URL are exported
         export APP_NAME="${REPO_NAME}"
-        export MS_NAME="${REPO_NAME}"
 
         # Check necessary vars
         # Note: If CONFIG_SERVER_URL var is not exported, the process failed
         [ -z "${CONFIG_SERVER_URL}" ] && { echo "Not defined CONFIG_SERVER_URL var"; return 1; } || export CONFIG_SERVER_URL
-        [ -z "${VAULT_ROLE_ID}"     ] && { echo "Not defined VAULT_ROLE_ID var"; return 1; }
-        [ -z "${VAULT_SECRET_ID}"   ] && { echo "Not defined VAULT_SECRET_ID var"; return 1; }
 
         # Use allinconfig loader
-        berglas exec python3 /usr/local/app/app.py 
-        [ $? -ne 0 ] && return 1
+	allinconfig || return 1
 
         # Check file
         [ ! -f "${ENV_FILE_OUT:-allinconfig.env}" ] && { echo "Not found file ${ENV_FILE_OUT:-allinconfig.env}"; return 1; }
