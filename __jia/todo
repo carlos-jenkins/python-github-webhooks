@@ -1,0 +1,7 @@
+[done] arreglar bag de concurrencia
+[done] actrualizar a python
+
+reducir dependencias bash
+anadir cache de cloud pipelines usando pipeline module
+anadir reaction module con eligible checks
+integrar cambios de juan para elimnar berglass

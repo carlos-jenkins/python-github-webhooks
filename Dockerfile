@@ -1,9 +1,9 @@
 ARG REGISTRY=eu.gcr.io/gcp-tooling-pro-eslm/github.com/adeo
 
 # Get image from allinconfig--loader to get script for retrieving configuration
-FROM $REGISTRY/allinconfig/allinconfig--loader-python3.7:latest AS allinconfig--loader
+FROM $REGISTRY/allinconfig--loader:1.3.0-RC2 AS allinconfig--loader
 
-FROM python:2.7-alpine
+FROM python:3.7-alpine
 
 WORKDIR /app
 
@@ -12,18 +12,12 @@ COPY requirements.txt /app
 RUN pip install -r requirements.txt
 
 RUN apk add --update \
- python \
  curl \
  which \
  bash \
  unzip \
  jq \
- python3 \
- libxml2-utils \
- py3-yaml && \
- pip3 install kubernetes 
-
-RUN curl -s https://storage.googleapis.com/berglas/master/linux_amd64/berglas --output /usr/local/bin/berglas && chmod +x /usr/local/bin/berglas
+ libxml2-utils 
 
 RUN curl -sSL https://sdk.cloud.google.com | bash
 
@@ -36,7 +30,7 @@ RUN chmod +x /app/hooks/*
 EXPOSE 5000
 
 # Copy allinconfig modules to create environment from configuration (for serverless services)
-COPY --from=allinconfig--loader /usr/local/app/ /usr/local/app/
+COPY --from=allinconfig--loader /usr/local/bin/allinconfig /usr/local/bin/
 ONBUILD ENV PATH="/usr/local/app/.venv/bin:$PATH"
 
-CMD ["python", "webhooks.py"]
+CMD ["python3", "webhooks.py"]

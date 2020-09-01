@@ -26,7 +26,7 @@ import os
 from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
-from tempfile import mkstemp
+from tempfile import mkstemp, mkdtemp
 from os import access, X_OK, remove, fdopen
 from os.path import isfile, abspath, normpath, dirname, join, basename
 import sys
@@ -40,14 +40,16 @@ from ipaddress import ip_address, ip_network
 from flask import Flask, request, abort
 
 import google_utils
+from github_build_service.github import downloadzip_and_unzip, downloadzip_and_unzip_by_commit, get_last_release, get_release_by_tag
+from github_build_service.settings import Config
+
+import yaml
+# import shutil
 
 application = Flask(__name__)
 
-def runShell(script, tmpfile, event, version, language):
-    proc = Popen(
-        [script, tmpfile, event, version, language],
-        stdout=PIPE, stderr=PIPE
-    )
+def runShell(script, *args):
+    proc = Popen([script, *args], stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
 
     # Log errors if a hook failed
@@ -62,42 +64,78 @@ def runShell(script, tmpfile, event, version, language):
         'stderr': stderr.decode('utf-8'),
     }
 
-def runFunction(scripts, tmpfile, event, version, language):
-    getCloudBuildFiles()
+
+def get_pipelines_release(version):    
+    if version is Config.PIPELINES_DEFAULT_VERSION:
+        return get_last_release(Config.GITHUB_OWNER, Config.PIPELINES_REPO)
+    return get_release_by_tag(Config.GITHUB_OWNER, Config.PIPELINES_REPO, version)
+
+def get_lmesci(repo_path):
+    filepath = os.path.join(repo_path, Config.LMESCI_FILENAME)
+    if os.path.exists(filepath):
+        with open(filepath, 'r') as stream:
+            return yaml.safe_load(stream)
+    return {'build':{}}
+
+def get_pipelines_version(lmes_version=None):
+    if lmes_version is None:
+        return Config.PIPELINES_VERSION
+    return lmes_version
+
+def get_pipeline_by_lmestype(pipelines_path, lmestype=None):
+    if lmestype is None:
+        return lmestype
+    return os.path.join(pipelines_path, 'gwalker', f'cloudbuild_{lmestype}.yaml')
+
+# def asdsd:
+
+# prepare
+#     download repo
+#     download pipelines 
+#     run hooks
+def runFunction(scripts, payload, event, version, language):
+    repo_container_path = mkdtemp()
+
+    # TODO: replace it by a strategy pattern
+    repo_path = downloadzip_and_unzip_by_commit(
+        payload['repository']['html_url'],
+        payload['head_commit']['id'],
+        target_path=repo_container_path,
+    ) if event == 'push' else downloadzip_and_unzip(
+        payload['release']['zipball_url'],
+        repo_container_path,
+    )
+
+    lmesci = get_lmesci(repo_path)
+    pipelines_version = get_pipelines_version(lmesci['build'].get('pipeline_version'))
+    pipeline_release = get_pipelines_release(pipelines_version)
+    pipelines_container_path = mkdtemp()
+    pipelines_path = downloadzip_and_unzip(
+        pipeline_release['zipball_url'],
+        pipelines_container_path,
+    )
+
+    pipeline = get_pipeline_by_lmestype(
+        pipelines_path,
+        lmesci['build'].get('type'),
+    )
+
+    # Save payload to temporal file
+    osfd, tmpfile = mkstemp()
+    with fdopen(osfd, 'w') as pf:
+        pf.write(dumps(payload))
+
+    args = filter(None, [tmpfile, event, version, language, repo_path, os.path.join(pipelines_path, 'gwalker'), pipeline])
     ran = {}
     for s in scripts:
-        ran[basename(s)] = runShell(s, tmpfile, event, version, language)
-    # Remove temporal file
-    remove(tmpfile)
-    return ran
+        ran[basename(s)] = runShell(s, *args)
 
-def getCloudBuildFiles():
-    # Get through the api the latest release
-    github_url = "https://api.github.com/repos/adeo/cloud-build-pipelines/releases/"
-    if os.getenv("PIPELINES_VERSION", "latest") != "latest":
-        github_url += "tags/" + os.getenv("PIPELINES_VERSION")
-    else:
-        github_url += "latest"
-    releases_response = requests.get(github_url, auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
-    if releases_response.status_code < 300:
-        zipball_response = requests.get(releases_response.json()["zipball_url"], auth=(os.getenv("GITHUB_USER"), os.getenv("GITHUB_TOKEN")))
-        if zipball_response.status_code < 300:
-            zipFile = zipfile.ZipFile(io.BytesIO(zipball_response.content))
-            if not os.path.exists("/tmp/cloudbuild-pipelines"):
-                os.mkdir("/tmp/cloudbuild-pipelines")
-            if not os.path.exists("/app/cloudbuild_files"):
-                os.mkdir("/app/cloudbuild_files")
-            zipFile.extractall("/tmp/cloudbuild-pipelines")
-            for root, subdirs, files in os.walk('/tmp/cloudbuild-pipelines'):
-                for subdir in subdirs:
-                    if subdir == "gwalker":
-                        for gwalkerRoot, sdirs, sfiles in os.walk(os.path.join(root, subdir)):
-                            for f in sfiles:
-                                shutil.copy(os.path.join(gwalkerRoot, f), "/app/cloudbuild_files/" + f)
-        else:
-            application.logger.error("Could not get cloudbuild zipball")
-    else:
-        application.logger.error("Could not get release from github")
+    # Remove temporal files
+    remove(tmpfile)
+    shutil.rmtree(repo_container_path)
+    shutil.rmtree(pipelines_container_path)
+
+    return ran
 
 def getVersion(payload, branch, is_tag, event, commit_id):
     if is_tag and event == "release":
@@ -136,15 +174,6 @@ def getVersion(payload, branch, is_tag, event, commit_id):
                 return str(version.next_minor()) + "-RC." + commit_id[0:7]
     else:
         return commit_id[0:7]
-
-    #DOC: https://firebase.google.com/docs/database/rest/auth
-def getGoogleAccessToken(service_account_info):
-    scopes = ['https://www.googleapis.com/auth/cloud-platform']
-    credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
-    AuthorizedSession(credentials)
-    request = google.auth.transport.requests.Request()
-    credentials.refresh(request)
-    return credentials.token
 
 def getTagList(project_id, organization, repo_name, commit_id):
     registry_url="https://" + os.getenv("DOCKER_REGISTRY", "eu.gcr.io") + "/v2/" + project_id + "/github.com/" + organization + "/" + repo_name +"/tags/list"
@@ -272,18 +301,9 @@ def index():
     # Check file
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
     application.logger.debug("scripts after: {}".format(scripts))
-    #Give permissions
-    # for s in scripts: 
-    #     if not :
-    #         os.chmod(s, 777)
 
     if not scripts:
         return dumps({'status': 'nop'})
-
-    # Save payload to temporal file
-    osfd, tmpfile = mkstemp()
-    with fdopen(osfd, 'w') as pf:
-        pf.write(dumps(payload))
 
     # Calculate version
     version = getVersion(payload, branch, is_tag, event, commit_id)
@@ -292,7 +312,7 @@ def index():
     else:
         language="unknown"
     # Run scripts
-    ran = runFunction(scripts, tmpfile, event, version, language)
+    ran = runFunction(scripts, payload, event, version, language)
 
     info = config.get('return_scripts_info', False)
     if not info:
