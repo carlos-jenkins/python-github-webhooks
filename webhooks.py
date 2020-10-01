@@ -42,6 +42,7 @@ from flask import Flask, request, abort
 import google_utils
 from github_build_service.github import downloadzip_and_unzip, downloadzip_and_unzip_by_commit, get_last_release, get_release_by_tag
 from github_build_service.settings import Config
+from github_build_service.lang_detector import get_language_repo
 
 import yaml
 # import shutil
@@ -82,10 +83,13 @@ def get_pipelines_version(lmes_version=None):
         return Config.PIPELINES_VERSION
     return lmes_version
 
-def get_pipeline_by_lmestype(pipelines_path, lmestype=None):
+def get_pipeline_by_lmestype(pipelines_path, language, lmestype=None):
     if lmestype is None:
         return lmestype
-    return os.path.join(pipelines_path, 'gwalker', f'cloudbuild_{lmestype}.yaml')
+    if language != Config.DEFAULT_LANGUAGE:
+        return os.path.join(pipelines_path, 'gwalker', f'cloudbuild_{lmestype}_{language}.yaml')
+    else:
+        return os.path.join(pipelines_path, 'gwalker', f'cloudbuild_{lmestype}.yaml')
 
 # def asdsd:
 
@@ -116,7 +120,7 @@ def runFunction(scripts, payload, event, version, language):
     )
 
     pipeline = get_pipeline_by_lmestype(
-        pipelines_path,
+        pipelines_path, language, 
         lmesci['build'].get('type'),
     )
 
@@ -307,10 +311,9 @@ def index():
 
     # Calculate version
     version = getVersion(payload, branch, is_tag, event, commit_id)
-    if payload["repository"]["language"]:
-        language=payload["repository"]["language"]
-    else:
-        language="unknown"
+    language = get_language_repo(payload["repository"]["url"], commit_id)
+    if language = "":
+        language = Config.DEFAULT_LANGUAGE
     # Run scripts
     ran = runFunction(scripts, payload, event, version, language)
 

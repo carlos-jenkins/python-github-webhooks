@@ -34,4 +34,3 @@ def get_release_by_tag(owner, repo, tag):
 
 def get_last_release(owner, repo):
     return get(f'https://{HOST}/repos/{owner}/{repo}/releases/latest').json()
-

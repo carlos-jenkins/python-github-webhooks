@@ -11,6 +11,7 @@ class Config(object):
     PIPELINES_VERSION = os.getenv("PIPELINES_VERSION", 'latest')
     PIPELINES_REPO = 'cloud-build-pipelines'
     LMESCI_FILENAME = '.lmes-ci.yaml'
+    DEFAULT_LANGUAGE = "Unknown"
 
 
 
