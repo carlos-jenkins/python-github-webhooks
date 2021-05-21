@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2014, 2015, 2016 Carlos Jenkins <carlos@jenkins.co.cr>
 #
@@ -34,13 +33,13 @@ logging.basicConfig(stream=stderr)
 try:
     from hooks import has_hook, run_hook
 except Exception as e:
-    logging.error('Import hooks failed')
-    raise(e)
+    logging.error("Import hooks failed")
+    raise (e)
 
 application = Flask(__name__)
 
 
-@application.route('/', methods=['GET', 'POST'])
+@application.route("/", methods=["GET", "POST"])
 def index():
     """
     Main WSGI application entry.
@@ -49,12 +48,12 @@ def index():
     path = normpath(abspath(dirname(__file__)))
 
     # Only POST is implemented - same effect as removing 'GET' in methods above
-    if request.method != 'POST':
+    if request.method != "POST":
         abort(405)
 
     # Load config
-    if isfile(join(path, 'config.json')):
-        with open(join(path, 'config.json'), 'r') as cfg:
+    if isfile(join(path, "config.json")):
+        with open(join(path, "config.json")) as cfg:
             config = loads(cfg.read())
     else:
         # abort(503, 'Configuration file config.json is missing.')
@@ -62,41 +61,37 @@ def index():
             "github_ips_only": False,
             "enforce_secret": "",
             "return_scripts_info": False,
-            "hooks_path": "/missing"
+            "hooks_path": "/missing",
         }
 
-    hooks = config.get('hooks_path', join(path, 'hooks'))
+    hooks = config.get("hooks_path", join(path, "hooks"))
 
     # Allow Github IPs only
-    if config.get('github_ips_only', True):
-        src_ip = ip_address(
-            u'{}'.format(request.access_route[0])  # Fix stupid ipaddress issue
-        )
-        whitelist = requests.get('https://api.github.com/meta').json()['hooks']
+    if config.get("github_ips_only", True):
+        src_ip = ip_address(f"{request.access_route[0]}")  # Fix stupid ipaddress issue
+        whitelist = requests.get("https://api.github.com/meta").json()["hooks"]
 
         for valid_ip in whitelist:
             if src_ip in ip_network(valid_ip):
                 break
         else:
-            logging.error('IP {} not allowed'.format(
-                src_ip
-            ))
+            logging.error(f"IP {src_ip} not allowed")
             abort(403)
 
     # Enforce secret
-    secret = config.get('enforce_secret', '')
+    secret = config.get("enforce_secret", "")
     if secret:
         # Only SHA1 is supported
-        header_signature = request.headers.get('X-Hub-Signature')
+        header_signature = request.headers.get("X-Hub-Signature")
         if header_signature is None:
             abort(403)
 
-        sha_name, signature = header_signature.split('=')
-        if sha_name != 'sha1':
+        sha_name, signature = header_signature.split("=")
+        if sha_name != "sha1":
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(str(secret), msg=request.data, digestmod='sha1')
+        mac = hmac.new(str(secret), msg=request.data, digestmod="sha1")
 
         # Python prior to 2.7.7 does not have hmac.compare_digest
         if hexversion >= 0x020707F0:
@@ -110,17 +105,17 @@ def index():
                 abort(403)
 
     # Implement ping
-    event = request.headers.get('X-GitHub-Event', 'ping')
-    if event == 'ping':
+    event = request.headers.get("X-GitHub-Event", "ping")
+    if event == "ping":
         if has_hook(event):
             return jsonify(run_hook(event))
-        return jsonify({'msg': 'pang'})
+        return jsonify({"msg": "pang"})
 
     # Gather data
     try:
         payload = request.get_json()
     except Exception:
-        logging.warning('Request parsing failed')
+        logging.warning("Request parsing failed")
         abort(400)
 
     # Determining the branch is tricky, as it only appears for certain event
@@ -131,20 +126,20 @@ def index():
     try:
         # Case 1: a ref_type indicates the type of ref.
         # This true for create and delete events.
-        if 'ref_type' in payload:
-            if payload['ref_type'] == 'branch':
-                branch = payload['ref']
+        if "ref_type" in payload:
+            if payload["ref_type"] == "branch":
+                branch = payload["ref"]
 
         # Case 2: a pull_request object is involved. This is pull_request and
         # pull_request_review_comment events.
-        elif 'pull_request' in payload:
+        elif "pull_request" in payload:
             # This is the TARGET branch for the pull-request, not the source
             # branch
-            branch = payload['pull_request']['base']['ref']
+            branch = payload["pull_request"]["base"]["ref"]
 
-        elif event in ['push']:
+        elif event in ["push"]:
             # Push events provide a full Git ref in 'ref' and not a 'ref_type'.
-            branch = payload['ref'].split('/', 2)[2]
+            branch = payload["ref"].split("/", 2)[2]
 
     except KeyError:
         # If the payload structure isn't what we expect, we'll live without
@@ -153,72 +148,63 @@ def index():
 
     # All current events have a repository, but some legacy events do not,
     # so let's be safe
-    name = payload['repository']['name'] if 'repository' in payload else None
+    name = payload["repository"]["name"] if "repository" in payload else None
 
-    meta = {
-        'name': name,
-        'branch': branch,
-        'event': event
-    }
-    logging.info('Metadata:\n{}'.format(dumps(meta)))
+    meta = {"name": name, "branch": branch, "event": event}
+    logging.info(f"Metadata:\n{dumps(meta)}")
 
     # Skip push-delete
-    if event == 'push' and payload['deleted']:
-        logging.info('Skipping push-delete event for {}'.format(dumps(meta)))
-        return jsonify({'status': 'skipped'})
+    if event == "push" and payload["deleted"]:
+        logging.info(f"Skipping push-delete event for {dumps(meta)}")
+        return jsonify({"status": "skipped"})
 
     # Possible hooks
     scripts = []
     if branch and name:
-        scripts.append(join(hooks, '{event}-{name}-{branch}'.format(**meta)))
+        scripts.append(join(hooks, "{event}-{name}-{branch}".format(**meta)))
     if name:
-        scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
-    scripts.append(join(hooks, '{event}'.format(**meta)))
-    scripts.append(join(hooks, 'all'))
+        scripts.append(join(hooks, "{event}-{name}".format(**meta)))
+    scripts.append(join(hooks, "{event}".format(**meta)))
+    scripts.append(join(hooks, "all"))
 
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
     if not scripts:
-        return jsonify({'status': 'nop'})
+        return jsonify({"status": "nop"})
 
     # Save payload to temporal file
     osfd, tmpfile = mkstemp()
-    with fdopen(osfd, 'w') as pf:
+    with fdopen(osfd, "w") as pf:
         pf.write(dumps(payload))
 
     # Run scripts
     ran = {}
     for s in scripts:
 
-        proc = Popen(
-            [s, tmpfile, event],
-            stdout=PIPE, stderr=PIPE
-        )
+        proc = Popen([s, tmpfile, event], stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
 
         ran[basename(s)] = {
-            'returncode': proc.returncode,
-            'stdout': stdout.decode('utf-8'),
-            'stderr': stderr.decode('utf-8'),
+            "returncode": proc.returncode,
+            "stdout": stdout.decode("utf-8"),
+            "stderr": stderr.decode("utf-8"),
         }
 
         # Log errors if a hook failed
         if proc.returncode != 0:
-            logging.error('{} : {} \n{}'.format(
-                s, proc.returncode, stderr
-            ))
+            logging.error(f"{s} : {proc.returncode} \n{stderr}")
 
     # Remove temporal file
     remove(tmpfile)
 
-    info = config.get('return_scripts_info', False)
+    info = config.get("return_scripts_info", False)
     if not info:
-        return jsonify({'status': 'done'})
+        return jsonify({"status": "done"})
 
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)
     return jsonify(ran)
 
 
-if __name__ == '__main__':
-    application.run(debug=True, host='0.0.0.0')
+if __name__ == "__main__":
+    application.run(debug=True, host="0.0.0.0")
