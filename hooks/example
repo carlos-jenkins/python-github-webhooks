@@ -30,7 +30,7 @@ def create_github_issue(title, body=None, labels=None):
     :return:
     """
     # Our url to create issues via POST
-    url = 'https://api.github.com/repos/%s/%s/issues' % (REPO_OWNER, REPO_NAME)
+    url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues'
     # Create an authenticated session to create the issue
     session = requests.Session()
     session.auth = (USERNAME, API_KEY)
@@ -48,7 +48,7 @@ def create_github_issue(title, body=None, labels=None):
 
 
 if __name__ == '__main__':
-    with open(sys.argv[1], 'r') as jsp:
+    with open(sys.argv[1]) as jsp:
         payload = json.loads(jsp.read())
     action = payload['action']
     repo = payload['repository']['full_name']
@@ -56,6 +56,6 @@ if __name__ == '__main__':
         create_github_issue('%s was deleted' % repo, 'Seems we\'ve got ourselves a bit of an issue here.\n\n@<user>',
                             ['deleted'])
 
-    outfile = '/tmp/webhook-{}.log'.format(repo)
+    outfile = f'/tmp/webhook-{repo}.log'
     with open(outfile, 'w') as f:
         f.write(json.dumps(payload))
